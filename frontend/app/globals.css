@@ -1,26 +1,54 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050505;
+  --foreground: #ffffff;
+  --gold: #D4AF37;
+  --silver: #C0C0C0;
+  --gold-gradient: linear-gradient(135deg, #D4AF37 0%, #F5D76E 50%, #D4AF37 100%);
+  --silver-gradient: linear-gradient(135deg, #C0C0C0 0%, #E0E0E0 50%, #C0C0C0 100%);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-gold: var(--gold);
+  --color-silver: var(--silver);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
+  overflow-x: hidden;
 }
+
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gold-text {
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-border {
+  border: 1px solid var(--gold);
+}
+
+.silver-text {
+  background: var(--silver-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.premium-shadow {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
+}
+
