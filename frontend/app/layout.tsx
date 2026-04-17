@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description: "The elite social game for legends.",
 };
 
-import { ThemeProvider } from "./components/ThemeProvider";
+import { ThemeProvider } from "@/app/components/ThemeProvider";
 
 export default function RootLayout({
   children,

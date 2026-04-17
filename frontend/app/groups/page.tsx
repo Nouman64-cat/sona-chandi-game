@@ -4,8 +4,9 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/app/components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Plus, Loader2, Users, X, UserMinus, Settings, Trash2, LogOut } from 'lucide-react';
+import { Shield, Plus, Loader2, Users, X, UserMinus, Settings, Trash2, LogOut, Swords } from 'lucide-react';
 import api from '@/app/services/apiService';
+import GameArena from '@/app/components/GameArena';
 
 function GroupsContent() {
   const searchParams = useSearchParams();
@@ -15,6 +16,11 @@ function GroupsContent() {
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
   const [creating, setCreating] = useState(false);
+
+  // Game specific state
+  const [showArena, setShowArena] = useState(false);
+  const [activeGameId, setActiveGameId] = useState<number | null>(null);
+  const [startingGame, setStartingGame] = useState(false);
 
   
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
@@ -34,8 +40,6 @@ function GroupsContent() {
 
   const fetchGroups = async () => {
     try {
-      // In a real app we'd have a route like /groups/me or similar
-      // For now we'll fetch all and filter or assume user is in them
       const response = await api.get('/groups/'); 
       setGroups(response.data);
     } catch (err) {
@@ -79,9 +83,15 @@ function GroupsContent() {
   const selectGroup = async (group: any) => {
     setSelectedGroup(group);
     setGroupMembers([]);
+    setActiveGameId(null);
     try {
-      const response = await api.get(`/groups/${group.id}/members`);
-      setGroupMembers(response.data);
+      const respMembers = await api.get(`/groups/${group.id}/members`);
+      setGroupMembers(respMembers.data);
+      
+      const respGame = await api.get(`/games/state/${group.id}`);
+      if (respGame.data && respGame.data.status === 'active') {
+          setActiveGameId(respGame.data.game_id);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -90,10 +100,9 @@ function GroupsContent() {
   const addMember = async (userId: number) => {
     try {
       await api.post(`/groups/${selectedGroup.id}/add-member/${userId}?admin_id=${currentUserId}`);
-      // Refresh members
       const response = await api.get(`/groups/${selectedGroup.id}/members`);
       setGroupMembers(response.data);
-    } catch (err) {
+    } catch (err: any) {
       alert(err.response?.data?.detail || "Failed to add member");
     }
   };
@@ -102,7 +111,7 @@ function GroupsContent() {
     try {
        await api.post(`/groups/${selectedGroup.id}/leave/${userId}?requestor_id=${currentUserId}`);
        setGroupMembers(groupMembers.filter((m: any) => m.id !== userId));
-    } catch (err) {
+    } catch (err: any) {
         alert(err.response?.data?.detail || "Failed to remove member");
     }
   };
@@ -113,14 +122,37 @@ function GroupsContent() {
           await api.delete(`/groups/${selectedGroup.id}?admin_id=${currentUserId}`);
           setGroups(groups.filter((g: any) => g.id !== selectedGroup.id));
           setSelectedGroup(null);
-      } catch (err) {
+      } catch (err: any) {
           alert(err.response?.data?.detail || "Failed to delete group");
       }
   };
 
+  const handleStartGame = async () => {
+      setStartingGame(true);
+      try {
+          const response = await api.post(`/games/start/${selectedGroup.id}?requestor_id=${currentUserId}`);
+          setActiveGameId(response.data.id);
+          setShowArena(true);
+      } catch (err: any) {
+          alert(err.response?.data?.detail || "Failed to start match.");
+      } finally {
+          setStartingGame(false);
+      }
+  };
+
+
   return (
     <div className="flex bg-background text-text-primary">
       <Navbar />
+      
+      {showArena && selectedGroup && (
+        <GameArena 
+          groupId={selectedGroup.id} 
+          currentUserId={currentUserId!} 
+          groupMembers={groupMembers} 
+          onClose={() => setShowArena(false)}
+        />
+      )}
       
       <main className="min-h-screen flex-1 p-6 pb-24 md:pb-6 md:pl-24 lg:pl-72">
         <div className="mx-auto max-w-4xl pt-8">
@@ -228,16 +260,17 @@ function GroupsContent() {
                           </div>
 
                           <div className="grid gap-8 md:grid-cols-2">
-                              <div>
+                              {/* Left Column: Member List always visible to everyone */}
+                              <div className="flex flex-col h-full">
                                   <h4 className="mb-4 text-sm font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2">
                                       <Users size={16} />
                                       Squad Members
                                   </h4>
-                                  <div className="space-y-3">
+                                  <div className="space-y-3 flex-1 overflow-y-auto pr-2 max-h-64">
                                       {groupMembers.map((member: any) => (
                                           <div key={member.id} className="flex items-center justify-between rounded-2xl bg-white/5 p-4">
                                               <div className="flex items-center gap-3">
-                                                  <div className="h-8 w-8 rounded-lg bg-silver/10 flex items-center justify-center text-xs font-bold">{member.username[0]}</div>
+                                                  <div className="h-8 w-8 rounded-lg bg-silver/10 flex items-center justify-center text-xs font-bold uppercase">{member.username[0]}</div>
                                                   <span className="font-medium text-sm">{member.full_name}</span>
                                                   {member.id === selectedGroup.creator_id && <span className="text-[10px] text-gold uppercase">Admin</span>}
                                               </div>
@@ -259,42 +292,79 @@ function GroupsContent() {
                                           </div>
                                       ))}
                                   </div>
+
+                                  {/* Game Triggers: Outside any admin-only block */}
+                                  <div className="mt-8 border-t border-border-primary pt-6 flex flex-col gap-4">
+                                       {activeGameId ? (
+                                           <button 
+                                             onClick={() => setShowArena(true)}
+                                             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold py-4 font-bold text-black shadow-lg shadow-gold/20 transition-all hover:scale-[1.02]"
+                                           >
+                                               <Swords size={20} /> Enter Match Arena
+                                           </button>
+                                       ) : groupMembers.length >= 1 && (
+                                           <div className="flex flex-col gap-2">
+                                               <button 
+                                                 onClick={handleStartGame}
+                                                 disabled={startingGame}
+                                                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold py-4 font-bold text-black transition-all hover:scale-[1.02]"
+                                               >
+                                                   {startingGame ? <Loader2 className="animate-spin" /> : <><Swords size={20} /> Start Game</>}
+                                               </button>
+                                               {groupMembers.length < 4 && (
+                                                   <p className="text-[10px] text-center text-text-secondary">Note: Match optimized for 4 players. Current: {groupMembers.length}.</p>
+                                               )}
+                                           </div>
+                                       )}
+                                       
+                                       {selectedGroup.creator_id === currentUserId && (
+                                           <div className="flex gap-4">
+                                               <button className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-white/5 py-3 text-sm font-bold text-text-secondary hover:text-text-primary transition-all">
+                                                   <Settings size={16} /> Settings
+                                               </button>
+                                               <button 
+                                                 onClick={deleteGroup}
+                                                 className="flex items-center justify-center gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                                               >
+                                                   <Trash2 size={16} />
+                                               </button>
+                                           </div>
+                                       )}
+                                  </div>
                               </div>
 
-                              {selectedGroup.creator_id === currentUserId && (
-                                  <div>
-                                      <h4 className="mb-4 text-sm font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2">
-                                          <Plus size={16} />
-                                          Add Allies
-                                      </h4>
-                                      <div className="space-y-3 max-h-64 overflow-y-auto pr-2 pb-4">
-                                          {friends.map((friend: any) => (
-                                              <div key={friend.id} className="flex items-center justify-between rounded-2xl border border-border-primary p-4 transition-all hover:bg-white/5">
-                                                  <span className="text-sm">{friend.full_name}</span>
-                                                  <button 
-                                                    onClick={() => addMember(friend.id)}
-                                                    className="rounded-lg bg-gold/10 p-2 text-gold hover:bg-gold hover:text-black transition-all"
-                                                  >
-                                                      <Plus size={16} />
-                                                  </button>
-                                              </div>
-                                          ))}
-                                          {friends.length === 0 && <p className="text-xs text-text-secondary italic">No allies available to add.</p>}
+                              {/* Right Column: Admin Actions */}
+                              <div>
+                                  {selectedGroup.creator_id === currentUserId ? (
+                                      <>
+                                          <h4 className="mb-4 text-sm font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2">
+                                              <Plus size={16} />
+                                              Add Allies
+                                          </h4>
+                                          <div className="space-y-3 max-h-64 overflow-y-auto pr-2 pb-4">
+                                              {friends.map((friend: any) => (
+                                                  <div key={friend.id} className="flex items-center justify-between rounded-2xl border border-border-primary p-4 transition-all hover:bg-white/5">
+                                                      <span className="text-sm">{friend.full_name}</span>
+                                                      <button 
+                                                        onClick={() => addMember(friend.id)}
+                                                        className="rounded-lg bg-gold/10 p-2 text-gold hover:bg-gold hover:text-black transition-all"
+                                                      >
+                                                          <Plus size={16} />
+                                                      </button>
+                                                  </div>
+                                              ))}
+                                              {friends.length === 0 && <p className="text-xs text-text-secondary italic">No allies available to add.</p>}
+                                          </div>
+                                      </>
+                                  ) : (
+                                      <div className="flex h-full items-center justify-center rounded-3xl bg-white/5 p-8 text-center">
+                                          <div>
+                                              <Shield className="mx-auto mb-4 text-text-secondary opacity-30" size={48} />
+                                              <p className="text-sm text-text-secondary italic">Only the squad admin can recruit new allies.</p>
+                                          </div>
                                       </div>
-
-                                      <div className="mt-8 border-t border-border-primary pt-6 flex gap-4">
-                                          <button className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-white/5 py-3 text-sm font-bold text-text-secondary hover:text-text-primary transition-all">
-                                              <Settings size={16} /> Edit Squad
-                                          </button>
-                                          <button 
-                                            onClick={deleteGroup}
-                                            className="flex items-center justify-center gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-red-500 hover:bg-red-500 hover:text-white transition-all"
-                                          >
-                                              <Trash2 size={16} />
-                                          </button>
-                                      </div>
-                                  </div>
-                              )}
+                                  )}
+                              </div>
                           </div>
                       </motion.div>
                   </motion.div>
@@ -324,4 +394,3 @@ export default function GroupsPage() {
     </Suspense>
   );
 }
-

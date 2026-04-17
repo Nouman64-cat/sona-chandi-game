@@ -87,7 +87,25 @@ class GroupRead(GroupBase):
     id: int
     creator_id: int
 
+# --- Game Models ---
+
+class Game(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    group_id: int = Field(foreign_key="group.id")
+    status: str = Field(default="active") # active, finished
+    created_at: Optional[int] = Field(default=None) # Timestamp
+
+class PlayerCard(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    game_id: int = Field(foreign_key="game.id")
+    user_id: int = Field(foreign_key="user.id")
+    card_type: str # A, B, C, D
+    value: int # 100, 200, 300, 400
+    is_played: bool = Field(default=False)
+    # Visual preference/theme index 0-3
+    theme_index: int = Field(default=0)
 
 class UserSearchResponse(UserRead):
     is_friend: bool = False
     is_self: bool = False
+

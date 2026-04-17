@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import users, friends, groups, auth
+from app.routes import users, friends, groups, auth, games
 from app.database.connection import create_db_and_tables
 
 app = FastAPI(title="Sona Chandi Game API")
@@ -23,6 +23,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(friends.router)
 app.include_router(groups.router)
+app.include_router(games.router)
 
 @app.get('/')
 def root():

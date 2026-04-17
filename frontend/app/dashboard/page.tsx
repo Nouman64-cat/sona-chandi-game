@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/app/components/Navbar';
 
 import { motion } from 'framer-motion';
-import { Users, Shield, TrendingUp, Trophy } from 'lucide-react';
+import { Users, Shield, TrendingUp, Trophy, Swords, Sparkles } from 'lucide-react';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
@@ -95,7 +95,13 @@ export default function DashboardPage() {
             >
               <h3 className="mb-6 text-xl font-bold">Quick Actions</h3>
               <div className="grid grid-cols-1 gap-4">
-                <Link href="/groups?create=true" className="flex items-center gap-4 rounded-2xl bg-gold p-4 font-bold text-black transition-all hover:scale-[1.02] w-full">
+                <Link href="/game" className="flex items-center gap-4 rounded-2xl bg-gradient-to-r from-gold to-amber-600 p-4 font-bold text-black shadow-lg shadow-gold/20 transition-all hover:scale-[1.02] w-full relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <Swords size={20} />
+                  Enter Live Arena
+                  <Sparkles size={16} className="ml-auto animate-pulse" />
+                </Link>
+                <Link href="/groups?create=true" className="flex items-center gap-4 rounded-2xl border border-border-primary p-4 font-bold transition-all hover:bg-white/5 w-full">
                   <Shield size={20} />
                   Create New Group
                 </Link>
@@ -104,6 +110,7 @@ export default function DashboardPage() {
                   Find More Friends
                 </Link>
               </div>
+
             </motion.div>
           </div>
         </div>

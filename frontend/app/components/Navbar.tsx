@@ -3,9 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Search, Users, Shield, LogOut, Sun, Moon } from 'lucide-react';
+import { Home, Search, Users, Shield, LogOut, Sun, Moon, Swords } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useTheme } from './ThemeProvider';
+import { useTheme } from '@/app/components/ThemeProvider';
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -22,7 +22,25 @@ const Navbar = () => {
     { label: 'Search', icon: Search, path: '/search' },
     { label: 'Friends', icon: Users, path: '/friends' },
     { label: 'Groups', icon: Shield, path: '/groups' },
+    { label: 'Arena', icon: Swords, path: '/game' },
   ];
+
+  const [userInfo, setUserInfo] = React.useState<{name: string, username: string} | null>(null);
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUserInfo({
+          name: payload.full_name || 'Legend',
+          username: payload.username || 'unknown'
+        });
+      } catch (e) {
+        console.error("Token parse error", e);
+      }
+    }
+  }, []);
 
   return (
     <>
@@ -31,7 +49,7 @@ const Navbar = () => {
         <div className="mb-12 hidden lg:block">
           <h1 className="gold-text text-2xl font-bold tracking-tighter italic">SONA CHANDI</h1>
         </div>
-        <div className="flex flex-1 flex-col gap-4">
+        <div className="flex flex-1 flex-col gap-4 w-full">
           {navItems.map((item) => (
             <Link key={item.path} href={item.path} className="group relative">
               <div className={`flex items-center gap-4 rounded-xl p-3 transition-all duration-300 ${pathname === item.path ? 'bg-gold/10 text-gold' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'}`}>
@@ -46,6 +64,18 @@ const Navbar = () => {
         </div>
 
         <div className="mt-auto flex flex-col gap-4 w-full">
+          {userInfo && (
+            <div className="mb-4 hidden items-center gap-3 rounded-2xl bg-white/5 p-4 lg:flex">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold text-black font-black uppercase shadow-lg shadow-gold/20">
+                {userInfo.name[0]}
+              </div>
+              <div className="overflow-hidden">
+                <p className="truncate text-sm font-bold text-text-primary">{userInfo.name}</p>
+                <p className="truncate text-[10px] text-text-secondary">@{userInfo.username}</p>
+              </div>
+            </div>
+          )}
+          
           <button 
             onClick={toggleTheme}
             className="flex items-center gap-4 rounded-xl p-3 text-text-secondary transition-all hover:bg-white/5 hover:text-text-primary lg:w-full"
