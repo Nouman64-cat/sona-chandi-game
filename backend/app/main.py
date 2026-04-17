@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import users, friends, groups
+from app.routes import users, friends, groups, auth
 from app.database.connection import create_db_and_tables
 
 app = FastAPI(title="Sona Chandi Game API")
@@ -8,6 +8,7 @@ app = FastAPI(title="Sona Chandi Game API")
 def on_startup():
     create_db_and_tables()
 
+app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(friends.router)
 app.include_router(groups.router)
