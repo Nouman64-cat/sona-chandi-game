@@ -15,3 +15,18 @@ def get_game_state(group_id: int, session: Session = Depends(get_session)):
     if not state:
         return {"status": "inactive"}
     return state
+
+@router.post("/{game_id}/play")
+def play_turn(game_id: int, card_id: int, requestor_id: int, session: Session = Depends(get_session)):
+    return GameService.play_turn(session, game_id, requestor_id, card_id)
+
+@router.post("/{game_id}/end")
+def end_game(game_id: int, session: Session = Depends(get_session)):
+    from app.models.user import Game
+    game = session.get(Game, game_id)
+    if game:
+        game.status = "finished"
+        session.add(game)
+        session.commit()
+    return {"status": "success"}
+

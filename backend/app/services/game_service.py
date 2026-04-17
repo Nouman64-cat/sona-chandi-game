@@ -21,10 +21,11 @@ class GameService:
 
         # Check for active game
         statement = select(Game).where(Game.group_id == group_id, Game.status == "active")
-        active_game = session.exec(statement).first()
-        if active_game:
-            # For now, just return existing game, or we could raise error
-            return active_game
+        active_games = session.exec(statement).all()
+        for old_game in active_games:
+            old_game.status = "finished" 
+            session.add(old_game)
+        session.commit()
 
         # Verify at least 1 member (allowing 1-4 for testing, but target is 4)
         statement = select(User).join(GroupMember).where(GroupMember.group_id == group_id)
@@ -36,30 +37,61 @@ class GameService:
         active_members = members[:4]
 
         # Create Game
-        game = Game(group_id=group_id, status="active", created_at=int(time.time()))
+        game = Game(
+            group_id=group_id, 
+            status="active", 
+            current_turn_user_id=requestor_id, # Starter goes first
+            created_at=int(time.time())
+        )
         session.add(game)
         session.commit()
         session.refresh(game)
 
         # Create Cards for each member
+        # DECK: 4 sets of 4 + 1 extra "Sona" card = 17 cards
+        import random
+        deck = []
         card_types = [
             ("A", 100),
             ("B", 200),
             ("C", 300),
             ("D", 400)
         ]
-
-        for idx, member in enumerate(active_members):
-            for c_type, c_val in card_types:
-                card = PlayerCard(
-                    game_id=game.id,
-                    user_id=member.id,
-                    card_type=c_type,
-                    value=c_val,
-                    theme_index=idx # 0-3 determines theme
-                )
+        
+        # 4 of each type
+        for c_type, c_val in card_types:
+            for _ in range(4):
+                deck.append((c_type, c_val))
+        
+        # 17th card: "Sona" (Wild/Extra)
+        deck.append(("G", 500)) 
+        
+        # SHUFFLE
+        random.shuffle(deck)
+        
+        # DISTRIBUTE
+        # Give 5 cards to requestor first
+        for _ in range(5):
+             if not deck: break
+             c_type, c_val = deck.pop()
+             card = PlayerCard(game_id=game.id, user_id=requestor_id, card_type=c_type, value=c_val)
+             session.add(card)
+        
+        # Give 4 cards to others
+        other_members = [m for m in active_members if m.id != requestor_id]
+        for member in other_members:
+            for _ in range(4):
+                if not deck: break
+                c_type, c_val = deck.pop()
+                card = PlayerCard(game_id=game.id, user_id=member.id, card_type=c_type, value=c_val)
                 session.add(card)
         
+        # Any remaining cards (in case of fewer players)
+        while deck:
+            c_type, c_val = deck.pop()
+            card = PlayerCard(game_id=game.id, user_id=requestor_id, card_type=c_type, value=c_val)
+            session.add(card)
+
         session.commit()
         return game
 
@@ -68,7 +100,10 @@ class GameService:
         statement = select(Game).where(Game.group_id == group_id, Game.status == "active")
         game = session.exec(statement).first()
         if not game:
-            return None
+            # Check for recently finished game to show winner
+            statement = select(Game).where(Game.group_id == group_id, Game.status == "finished").order_by(Game.created_at.desc())
+            game = session.exec(statement).first()
+            if not game: return None
         
         # Get all cards for this game
         statement = select(PlayerCard).where(PlayerCard.game_id == game.id)
@@ -77,5 +112,64 @@ class GameService:
         return {
             "game_id": game.id,
             "status": game.status,
-            "cards": cards
+            "current_turn_user_id": game.current_turn_user_id,
+            "winner_id": game.winner_id,
+            "cards": [card.model_dump() for card in cards]
         }
+
+    @staticmethod
+    def play_turn(session: Session, game_id: int, user_id: int, card_id: int):
+        game = session.get(Game, game_id)
+        if not game or game.status != "active":
+            raise HTTPException(status_code=404, detail="Active match not found")
+        
+        if game.current_turn_user_id != user_id:
+            raise HTTPException(status_code=403, detail="It is not your turn, legend.")
+        
+        card = session.get(PlayerCard, card_id)
+        if not card or card.user_id != user_id:
+            raise HTTPException(status_code=400, detail="You do not own this card.")
+
+        # Determine next player in the squad cycle
+        # We'll use the IDs of members in the group, ordered ascending
+        members_stmt = select(GroupMember).where(GroupMember.group_id == game.group_id).order_by(GroupMember.user_id)
+        memberships = session.exec(members_stmt).all()
+        member_ids = [m.user_id for m in memberships]
+        
+        if user_id not in member_ids:
+            raise HTTPException(status_code=400, detail="Player not in this squad.")
+            
+        current_idx = member_ids.index(user_id)
+        next_idx = (current_idx + 1) % len(member_ids)
+        next_user_id = member_ids[next_idx]
+
+        # Transfer Card
+        card.user_id = next_user_id
+        session.add(card)
+        
+        # Check Win Condition for the player who just played or the one who received?
+        # Actually, check ALL players in this game for 4 of a kind
+        for m_id in member_ids:
+            card_counts_stmt = select(PlayerCard).where(PlayerCard.game_id == game_id, PlayerCard.user_id == m_id)
+            p_cards = session.exec(card_counts_stmt).all()
+            
+            # Group by card_type
+            type_counts = {}
+            for pc in p_cards:
+                type_counts[pc.card_type] = type_counts.get(pc.card_type, 0) + 1
+            
+            for c_type, count in type_counts.items():
+                if count >= 4:
+                    game.status = "finished"
+                    game.winner_id = m_id
+                    game.current_turn_user_id = None
+                    session.add(game)
+                    session.commit()
+                    return game
+
+        # If no win, update turn
+        game.current_turn_user_id = next_user_id
+        session.add(game)
+        session.commit()
+        session.refresh(game)
+        return game

@@ -93,6 +93,8 @@ class Game(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     group_id: int = Field(foreign_key="group.id")
     status: str = Field(default="active") # active, finished
+    current_turn_user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    winner_id: Optional[int] = Field(default=None, foreign_key="user.id")
     created_at: Optional[int] = Field(default=None) # Timestamp
 
 class PlayerCard(SQLModel, table=True):
