@@ -65,24 +65,24 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="flex bg-[#050505] text-white">
+    <div className="flex bg-background text-text-primary">
       <Navbar />
       
       <main className="min-h-screen flex-1 p-6 pb-24 md:pb-6 md:pl-24 lg:pl-72">
         <div className="mx-auto max-w-4xl pt-8">
           <header className="mb-12">
             <h1 className="text-4xl font-bold">Find <span className="gold-text">Legends</span></h1>
-            <p className="mt-2 text-zinc-500">Search for players by name or username.</p>
+            <p className="mt-2 text-text-secondary">Search for players by name or username.</p>
           </header>
 
           <div className="mb-12 translate-y-0 relative">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-500" size={24} />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-text-secondary" size={24} />
             <input 
               type="text" 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search username or name..."
-              className="w-full rounded-3xl border border-white/10 bg-white/5 py-6 pl-16 pr-8 text-xl outline-none transition-all focus:border-gold/50 focus:bg-white/10"
+              className="w-full rounded-3xl border border-border-primary bg-card py-6 pl-16 pr-8 text-xl outline-none transition-all focus:border-gold/50 focus:bg-white/10"
             />
             {loading && <div className="absolute right-6 top-1/2 -translate-y-1/2"><Loader2 className="animate-spin text-gold" size={24} /></div>}
           </div>
@@ -91,12 +91,12 @@ export default function SearchPage() {
             {query ? (
                <>
                  <Search size={16} className="text-gold" />
-                 <span className="text-sm font-bold uppercase tracking-widest text-zinc-400">Search Results</span>
+                 <span className="text-sm font-bold uppercase tracking-widest text-text-secondary">Search Results</span>
                </>
             ) : (
                <>
                  <Sparkles size={16} className="text-gold" />
-                 <span className="text-sm font-bold uppercase tracking-widest text-zinc-400">Recommended Legends</span>
+                 <span className="text-sm font-bold uppercase tracking-widest text-text-secondary">Recommended Legends</span>
                </>
             )}
           </div>
@@ -122,7 +122,7 @@ export default function SearchPage() {
                         {user.full_name}
                         {user.is_self && <span className="rounded-md bg-gold/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-gold">You</span>}
                       </div>
-                      <div className="text-sm text-zinc-500">@{user.username}</div>
+                      <div className="text-sm text-text-secondary">@{user.username}</div>
                     </div>
                   </div>
                   
@@ -142,10 +142,10 @@ export default function SearchPage() {
 
           {!loading && results.length === 0 && query && (
              <div className="mt-20 text-center">
-                <div className="mx-auto mb-4 h-20 w-20 rounded-full bg-white/5 flex items-center justify-center text-zinc-700">
+                <div className="mx-auto mb-4 h-20 w-20 rounded-full bg-white/5 flex items-center justify-center text-zinc-700 uppercase tracking-widest">
                     <Search size={40} />
                 </div>
-                <p className="text-zinc-500">No legends found matching "{query}"</p>
+                <p className="text-text-secondary">No legends found matching "{query}"</p>
              </div>
           )}
         </div>
@@ -153,4 +153,5 @@ export default function SearchPage() {
     </div>
   );
 }
+
 

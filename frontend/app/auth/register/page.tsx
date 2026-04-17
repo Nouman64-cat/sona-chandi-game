@@ -40,7 +40,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#050505] p-6">
+    <div className="flex min-h-screen items-center justify-center bg-background p-6 text-text-primary">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -left-1/4 -top-1/4 h-1/2 w-1/2 rounded-full bg-gold/5 blur-[120px]" />
         <div className="absolute -bottom-1/4 -right-1/4 h-1/2 w-1/2 rounded-full bg-silver/5 blur-[120px]" />
@@ -53,7 +53,7 @@ export default function RegisterPage() {
       >
         <div className="mb-8 text-center">
           <h1 className="gold-text mb-2 text-4xl font-bold tracking-tighter italic">SONA CHANDI</h1>
-          <p className="text-zinc-400">Join the elite game. Register your legend.</p>
+          <p className="text-text-secondary">Join the elite game. Register your legend.</p>
         </div>
 
         {error && (
@@ -64,58 +64,58 @@ export default function RegisterPage() {
 
         <form onSubmit={handleRegister} className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Full Name</label>
+            <label className="text-sm font-medium text-text-secondary">Full Name</label>
             <div className="relative">
-              <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+              <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input 
                 type="text" name="full_name" required value={formData.full_name} onChange={handleChange}
                 placeholder="Nouman Ejaz"
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 outline-none transition-all focus:border-gold/50 focus:bg-white/10"
+                className="w-full rounded-xl border border-border-primary bg-bg-secondary py-3 pl-11 pr-4 outline-none transition-all focus:border-gold/50"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Username</label>
+            <label className="text-sm font-medium text-text-secondary">Username</label>
             <div className="relative">
-              <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+              <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input 
                 type="text" name="username" required value={formData.username} onChange={handleChange}
                 placeholder="nouman64"
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 outline-none transition-all focus:border-gold/50 focus:bg-white/10"
+                className="w-full rounded-xl border border-border-primary bg-bg-secondary py-3 pl-11 pr-4 outline-none transition-all focus:border-gold/50"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Email Address</label>
+            <label className="text-sm font-medium text-text-secondary">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input 
                 type="email" name="email" required value={formData.email} onChange={handleChange}
                 placeholder="nouman@example.com"
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 outline-none transition-all focus:border-gold/50 focus:bg-white/10"
+                className="w-full rounded-xl border border-border-primary bg-bg-secondary py-3 pl-11 pr-4 outline-none transition-all focus:border-gold/50"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Phone Number</label>
+            <label className="text-sm font-medium text-text-secondary">Phone Number</label>
             <div className="relative">
-              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input 
                 type="text" name="number" required value={formData.number} onChange={handleChange}
                 placeholder="+92 300 0000000"
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 outline-none transition-all focus:border-gold/50 focus:bg-white/10"
+                className="w-full rounded-xl border border-border-primary bg-bg-secondary py-3 pl-11 pr-4 outline-none transition-all focus:border-gold/50"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Gender</label>
+            <label className="text-sm font-medium text-text-secondary">Gender</label>
             <select 
               name="gender" value={formData.gender} onChange={handleChange}
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 px-4 outline-none transition-all focus:border-gold/50 focus:bg-white/10"
+              className="w-full rounded-xl border border-border-primary bg-bg-secondary py-3 px-4 outline-none transition-all focus:border-gold/50 text-text-primary"
             >
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -124,13 +124,13 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Password</label>
+            <label className="text-sm font-medium text-text-secondary">Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input 
                 type="password" name="password" required value={formData.password} onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-4 outline-none transition-all focus:border-gold/50 focus:bg-white/10"
+                className="w-full rounded-xl border border-border-primary bg-bg-secondary py-3 pl-11 pr-4 outline-none transition-all focus:border-gold/50"
               />
             </div>
           </div>
@@ -144,10 +144,11 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-zinc-500">
-          Already have an account? <Link href="/auth/login" className="font-bold text-gold hover:underline">Log In</Link>
+        <div className="mt-8 text-center text-sm text-text-secondary">
+          Already have an account? <Link href="/auth/register" className="font-bold text-gold hover:underline">Log In</Link>
         </div>
       </motion.div>
     </div>
   );
 }
+

@@ -27,7 +27,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="flex bg-[#050505] text-white">
+    <div className="flex bg-background text-text-primary">
       <Navbar />
       
       <main className="min-h-screen flex-1 p-6 pb-24 md:pb-6 md:pl-24 lg:pl-72">
@@ -63,52 +63,52 @@ export default function DashboardPage() {
                   <stat.icon size={24} />
                 </div>
                 <div className="text-2xl font-bold">{stat.value}</div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wider">{stat.label}</div>
+                <div className="text-xs text-text-secondary uppercase tracking-wider">{stat.label}</div>
               </motion.div>
             ))}
           </div>
 
           <div className="mt-12 grid gap-8 lg:grid-cols-2">
-             <motion.div 
-               initial={{ opacity: 0, scale: 0.98 }}
-               animate={{ opacity: 1, scale: 1 }}
-               className="glass rounded-3xl p-8"
-             >
-                <h3 className="mb-6 text-xl font-bold">Recent Activity</h3>
-                <div className="space-y-4">
-                  {[1,2,3].map(i => (
-                    <div key={i} className="flex items-center gap-4 rounded-2xl bg-white/5 p-4">
-                      <div className="h-10 w-10 rounded-full bg-gold/20" />
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-white">You added <span className="text-gold">Sultan</span> as a friend</div>
-                        <div className="text-xs text-zinc-500">2 hours ago</div>
-                      </div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass rounded-3xl p-8"
+            >
+              <h3 className="mb-6 text-xl font-bold">Recent Activity</h3>
+              <div className="space-y-4">
+                {[1,2,3].map(i => (
+                  <div key={i} className="flex items-center gap-4 rounded-2xl bg-white/5 p-4">
+                    <div className="h-10 w-10 rounded-full bg-gold/20" />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">You added <span className="text-gold">Sultan</span> as a friend</div>
+                      <div className="text-xs text-text-secondary">2 hours ago</div>
                     </div>
-                  ))}
-                </div>
-             </motion.div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
 
-             <motion.div 
-               initial={{ opacity: 0, scale: 0.98 }}
-               animate={{ opacity: 1, scale: 1 }}
-               className="glass rounded-3xl p-8"
-             >
-                <h3 className="mb-6 text-xl font-bold">Quick Actions</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  <button className="flex items-center gap-4 rounded-2xl bg-gold p-4 font-bold text-black transition-all hover:scale-[1.02]">
-                    <Shield size={20} />
-                    Create New Group
-                  </button>
-                  <Link href="/search" className="flex items-center gap-4 rounded-2xl border border-white/10 p-4 font-bold text-white transition-all hover:bg-white/5 w-full">
-                    <Users size={20} />
-                    Find More Friends
-                  </Link>
-
-                </div>
-             </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass rounded-3xl p-8"
+            >
+              <h3 className="mb-6 text-xl font-bold">Quick Actions</h3>
+              <div className="grid grid-cols-1 gap-4">
+                <Link href="/groups?create=true" className="flex items-center gap-4 rounded-2xl bg-gold p-4 font-bold text-black transition-all hover:scale-[1.02] w-full">
+                  <Shield size={20} />
+                  Create New Group
+                </Link>
+                <Link href="/search" className="flex items-center gap-4 rounded-2xl border border-border-primary p-4 font-bold transition-all hover:bg-white/5 w-full">
+                  <Users size={20} />
+                  Find More Friends
+                </Link>
+              </div>
+            </motion.div>
           </div>
         </div>
       </main>
     </div>
   );
 }
+

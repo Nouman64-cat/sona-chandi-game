@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "The elite social game for legends.",
 };
 
+import { ThemeProvider } from "./components/ThemeProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,10 +26,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#050505] text-white overflow-x-hidden`}>
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
 }
+
 

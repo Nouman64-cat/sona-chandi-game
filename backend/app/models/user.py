@@ -47,11 +47,13 @@ class Group(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True)
     description: Optional[str] = None
+    creator_id: int = Field(foreign_key="user.id")
     
     # Many-to-Many Members
     members: List[User] = Relationship(back_populates="groups", link_model=GroupMember)
 
 # --- API Schemas ---
+
 
 class UserBase(SQLModel):
     full_name: str
@@ -83,6 +85,8 @@ class GroupCreate(GroupBase):
 
 class GroupRead(GroupBase):
     id: int
+    creator_id: int
+
 
 class UserSearchResponse(UserRead):
     is_friend: bool = False

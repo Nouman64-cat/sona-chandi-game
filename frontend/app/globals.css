@@ -1,19 +1,43 @@
 @import "tailwindcss";
 
 :root {
+  /* Default: Dark Theme */
   --background: #050505;
+  --bg-secondary: #0f0f0f;
   --foreground: #ffffff;
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa; /* zinc-400 */
+  --nav-bg: rgba(0, 0, 0, 0.5);
+  
   --gold: #D4AF37;
   --silver: #C0C0C0;
   --gold-gradient: linear-gradient(135deg, #D4AF37 0%, #F5D76E 50%, #D4AF37 100%);
   --silver-gradient: linear-gradient(135deg, #C0C0C0 0%, #E0E0E0 50%, #C0C0C0 100%);
 }
 
+.light-theme {
+  --background: #fdfdfd;
+  --bg-secondary: #f4f4f5; /* zinc-100 */
+  --foreground: #09090b; /* zinc-950 */
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(0, 0, 0, 0.08);
+  --text-primary: #09090b;
+  --text-secondary: #52525b; /* zinc-600 */
+  --nav-bg: rgba(255, 255, 255, 0.8);
+}
+
 @theme inline {
   --color-background: var(--background);
+  --color-bg-secondary: var(--bg-secondary);
   --color-foreground: var(--foreground);
   --color-gold: var(--gold);
   --color-silver: var(--silver);
+  --color-card: var(--card-bg);
+  --color-border-primary: var(--card-border);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -23,13 +47,15 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--card-border);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .gold-text {
@@ -51,4 +77,3 @@ body {
 .premium-shadow {
   box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
 }
-

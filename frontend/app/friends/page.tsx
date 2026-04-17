@@ -49,14 +49,14 @@ export default function FriendsPage() {
   };
 
   return (
-    <div className="flex bg-[#050505] text-white">
+    <div className="flex bg-background text-text-primary">
       <Navbar />
       
       <main className="min-h-screen flex-1 p-6 pb-24 md:pb-6 md:pl-24 lg:pl-72">
         <div className="mx-auto max-w-4xl pt-8">
           <header className="mb-12">
             <h1 className="text-4xl font-bold">Your <span className="silver-text">Alliance</span></h1>
-            <p className="mt-2 text-zinc-500">Manage your connections and friendships.</p>
+            <p className="mt-2 text-text-secondary">Manage your connections and friendships.</p>
           </header>
 
           {loading ? (
@@ -81,12 +81,12 @@ export default function FriendsPage() {
                       </div>
                       <div>
                         <div className="font-bold">{friend.full_name}</div>
-                        <div className="text-sm text-zinc-500">@{friend.username}</div>
+                        <div className="text-sm text-text-secondary">@{friend.username}</div>
                       </div>
                     </div>
                     
                     <div className="flex gap-2">
-                       <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white transition-all">
+                       <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-text-secondary hover:bg-white/10 hover:text-text-primary transition-all">
                           <MessageSquare size={18} />
                        </button>
                        <button 
@@ -105,7 +105,7 @@ export default function FriendsPage() {
           
           {!loading && friends.length === 0 && (
              <div className="mt-20 text-center">
-                <p className="text-zinc-500 italic">You don't have any friends yet. Use search to find some!</p>
+                <p className="text-text-secondary italic">You don't have any friends yet. Use search to find some!</p>
              </div>
           )}
         </div>
@@ -113,3 +113,4 @@ export default function FriendsPage() {
     </div>
   );
 }
+

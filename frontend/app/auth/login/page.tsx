@@ -31,7 +31,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#050505] p-6">
+    <div className="flex min-h-screen items-center justify-center bg-background p-6 text-text-primary">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -left-1/4 -top-1/4 h-1/2 w-1/2 rounded-full bg-gold/5 blur-[120px]" />
         <div className="absolute -bottom-1/4 -right-1/4 h-1/2 w-1/2 rounded-full bg-silver/5 blur-[120px]" />
@@ -44,7 +44,7 @@ export default function LoginPage() {
       >
         <div className="mb-10 text-center">
           <h1 className="gold-text mb-2 text-4xl font-bold tracking-tighter italic">SONA CHANDI</h1>
-          <p className="text-zinc-400">Welcome back, legend. Log in to your account.</p>
+          <p className="text-text-secondary">Welcome back, legend. Log in to your account.</p>
         </div>
 
         {error && (
@@ -55,31 +55,31 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Username</label>
+            <label className="text-sm font-medium text-text-secondary">Username</label>
             <div className="relative">
-              <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
+              <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={20} />
               <input 
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 placeholder="Enter your username"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 outline-none transition-all focus:border-gold/50 focus:bg-white/10"
+                className="w-full rounded-2xl border border-border-primary bg-bg-secondary py-4 pl-12 pr-4 outline-none transition-all focus:border-gold/50"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Password</label>
+            <label className="text-sm font-medium text-text-secondary">Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={20} />
               <input 
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 outline-none transition-all focus:border-gold/50 focus:bg-white/10"
+                className="w-full rounded-2xl border border-border-primary bg-bg-secondary py-4 pl-12 pr-4 outline-none transition-all focus:border-gold/50"
               />
             </div>
           </div>
@@ -93,10 +93,11 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-zinc-500">
+        <div className="mt-8 text-center text-sm text-text-secondary">
           Don't have an account? <Link href="/auth/register" className="font-bold text-gold hover:underline">Register Now</Link>
         </div>
       </motion.div>
     </div>
   );
 }
+
