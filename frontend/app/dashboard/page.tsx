@@ -1,7 +1,9 @@
 "use client"
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import Navbar from '@/app/components/Navbar';
+
 import { motion } from 'framer-motion';
 import { Users, Shield, TrendingUp, Trophy } from 'lucide-react';
 
@@ -97,10 +99,11 @@ export default function DashboardPage() {
                     <Shield size={20} />
                     Create New Group
                   </button>
-                  <button className="flex items-center gap-4 rounded-2xl border border-white/10 p-4 font-bold text-white transition-all hover:bg-white/5">
+                  <Link href="/search" className="flex items-center gap-4 rounded-2xl border border-white/10 p-4 font-bold text-white transition-all hover:bg-white/5 w-full">
                     <Users size={20} />
                     Find More Friends
-                  </button>
+                  </Link>
+
                 </div>
              </motion.div>
           </div>

@@ -83,3 +83,7 @@ class GroupCreate(GroupBase):
 
 class GroupRead(GroupBase):
     id: int
+
+class UserSearchResponse(UserRead):
+    is_friend: bool = False
+    is_self: bool = False
