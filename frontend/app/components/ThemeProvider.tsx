@@ -6,14 +6,35 @@ type Theme = 'dark' | 'light';
 
 interface ThemeContextType {
   theme: Theme;
+  gender: string | null;
   toggleTheme: () => void;
+  refreshGender: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>('dark');
+  const [gender, setGender] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  const applyGenderClass = (currentGender: string | null) => {
+    document.documentElement.classList.remove('gender-female', 'gender-male');
+    if (!currentGender) return;
+    
+    const normalizedGender = currentGender.toLowerCase();
+    if (normalizedGender === 'female') {
+      document.documentElement.classList.add('gender-female');
+    } else if (normalizedGender === 'male') {
+      document.documentElement.classList.add('gender-male');
+    }
+  };
+
+  const refreshGender = () => {
+    const savedGender = localStorage.getItem('gender');
+    setGender(savedGender);
+    applyGenderClass(savedGender);
+  };
 
   useEffect(() => {
     // Load saved theme
@@ -24,6 +45,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         document.documentElement.classList.add('light-theme');
       }
     }
+
+    // Load saved gender
+    const savedGender = localStorage.getItem('gender');
+    setGender(savedGender);
+    applyGenderClass(savedGender);
+
     setMounted(true);
   }, []);
 
@@ -40,7 +67,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, gender, toggleTheme, refreshGender }}>
       {!mounted ? (
         <div style={{ visibility: 'hidden' }}>{children}</div>
       ) : (

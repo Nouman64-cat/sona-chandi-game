@@ -97,7 +97,7 @@ export default function DashboardPage() {
             >
               <h3 className="mb-6 text-xl font-bold text-text-primary">Quick Actions</h3>
               <div className="grid grid-cols-1 gap-4">
-                <Link href="/groups" className="flex items-center gap-4 rounded-2xl bg-gradient-to-r from-gold to-amber-600 p-4 font-black text-black shadow-lg shadow-gold/20 transition-all hover:scale-[1.02] w-full relative overflow-hidden group">
+                <Link href="/groups" className="flex items-center gap-4 rounded-2xl bg-gradient-to-r from-gold to-gold-secondary p-4 font-black text-black shadow-lg shadow-gold/20 transition-all hover:scale-[1.02] w-full relative overflow-hidden group">
                   <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   <Swords size={20} />
                   Enter Live Arena

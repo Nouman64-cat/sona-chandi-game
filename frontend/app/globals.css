@@ -11,10 +11,18 @@
   --text-secondary: #a1a1aa; /* zinc-400 */
   --nav-bg: rgba(0, 0, 0, 0.5);
   
+  /* Primary Brand (Sona) */
   --gold: #D4AF37;
-  --silver: #C0C0C0;
+  --gold-secondary: #d97706; /* amber-600 */
   --gold-gradient: linear-gradient(135deg, #D4AF37 0%, #F5D76E 50%, #D4AF37 100%);
+  --gold-legible: #D4AF37;
+  
+  --silver: #C0C0C0;
   --silver-gradient: linear-gradient(135deg, #C0C0C0 0%, #E0E0E0 50%, #C0C0C0 100%);
+  
+  /* Gender Tints (Default: Hidden) */
+  --gender-tint: transparent;
+  --gender-glow: transparent;
 }
 
 .light-theme {
@@ -29,11 +37,33 @@
   --gold-legible: #967117; /* Darker gold for light mode text */
 }
 
+/* Gender Overrides */
+.gender-male {
+  --gender-tint: rgba(59, 130, 246, 0.15);
+  --gender-glow: rgba(59, 130, 246, 0.6); /* Neon boost */
+  /* Shift main brand to Blue */
+  --gold: #3b82f6; /* blue-500 */
+  --gold-secondary: #1d4ed8; /* blue-700 */
+  --gold-legible: #1e40af; /* blue-800 */
+  --gold-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%);
+}
+
+.gender-female {
+  --gender-tint: rgba(236, 72, 153, 0.15);
+  --gender-glow: rgba(236, 72, 153, 0.6); /* Neon boost */
+  /* Shift main brand to Pink */
+  --gold: #ec4899; /* pink-500 */
+  --gold-secondary: #be185d; /* pink-700 */
+  --gold-legible: #9d174d; /* pink-800 */
+  --gold-gradient: linear-gradient(135deg, #ec4899 0%, #f472b6 50%, #ec4899 100%);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-bg-secondary: var(--bg-secondary);
   --color-foreground: var(--foreground);
   --color-gold: var(--gold);
+  --color-gold-secondary: var(--gold-secondary);
   --color-gold-legible: var(--gold-legible);
   --color-silver: var(--silver);
   --color-card: var(--card-bg);
@@ -44,8 +74,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
+.bg-background {
+  background-color: var(--background);
+  background-image: radial-gradient(circle at top right, var(--gender-tint), transparent 75%),
+                    radial-gradient(circle at bottom left, var(--gender-tint), transparent 75%);
+  background-attachment: fixed;
+}
+
 body {
-  background: var(--background);
+  @apply bg-background;
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
   overflow-x: hidden;
@@ -57,7 +94,8 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--card-border);
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  box-shadow: 0 0 15px var(--gender-glow);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .gold-text {

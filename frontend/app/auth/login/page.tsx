@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Lock, User as UserIcon, Loader2 } from 'lucide-react';
 import api from '@/app/services/apiService';
+import { useTheme } from '@/app/components/ThemeProvider';
 
 export default function LoginPage() {
+  const { refreshGender } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,6 +24,8 @@ export default function LoginPage() {
     try {
       const response = await api.post('/auth/login', { username, password });
       localStorage.setItem('token', response.data.access_token);
+      localStorage.setItem('gender', response.data.gender);
+      refreshGender();
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');

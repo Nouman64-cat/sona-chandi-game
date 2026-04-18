@@ -77,6 +77,7 @@ class UserLogin(SQLModel):
 class Token(SQLModel):
     access_token: str
     token_type: str
+    gender: str
 
 class GroupBase(SQLModel):
     name: str

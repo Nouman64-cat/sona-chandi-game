@@ -263,16 +263,16 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
           {playerGroups.map((player) => (
             <motion.div 
               key={player.id}
-              initial={player.isCurrentTurn ? { borderColor: "rgba(255,215,0,1)" } : {}}
+              initial={player.isCurrentTurn ? { borderColor: "var(--gold)" } : {}}
               animate={player.isCurrentTurn ? { 
                 boxShadow: [
-                  "0 0 15px 2px rgba(255,215,0,0.4)",
-                  "0 0 25px 4px rgba(255,215,0,0.6)",
-                  "0 0 15px 2px rgba(255,215,0,0.4)"
+                  "0 0 20px 4px var(--gender-glow)",
+                  "0 0 40px 8px var(--gender-glow)",
+                  "0 0 20px 4px var(--gender-glow)"
                 ]
               } : {}}
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              className={`glass rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 relative overflow-hidden flex flex-col items-center transition-all duration-500 border-2 ${player.isCurrentTurn ? 'bg-gold/10 border-gold' : 'border-white/5 opacity-80'}`}
+              className={`glass rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 relative overflow-hidden flex flex-col items-center transition-all duration-500 border-[3px] ${player.isCurrentTurn ? 'bg-gold/10 border-gold shadow-[0_0_60px_var(--gender-glow)] scale-[1.02]' : 'border-white/5 opacity-80'}`}
             >
               {player.isCurrentTurn && (
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gold/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
@@ -281,7 +281,7 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
               <div className={`absolute -right-16 -top-16 h-32 w-32 md:h-48 md:w-48 rounded-full bg-gradient-to-br ${player.theme.from} ${player.theme.to} ${player.isCurrentTurn ? 'opacity-30' : 'opacity-10'} blur-2xl md:blur-3xl`} />
               
               <div className="mb-4 md:mb-6 flex items-center gap-3 md:gap-4 self-start relative z-10">
-                  <div className={`relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl bg-gradient-to-br ${player.theme.from} ${player.theme.to} text-black text-sm md:text-base font-black uppercase shadow-lg ${player.isCurrentTurn ? 'ring-4 ring-gold/40' : ''}`}>
+                  <div className={`relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl bg-gradient-to-br ${player.theme.from} ${player.theme.to} text-black text-sm md:text-base font-black uppercase shadow-lg ${player.isCurrentTurn ? 'ring-4 ring-gold/40 shadow-[0_0_15px_var(--gender-glow)]' : ''}`}>
                     {player.username?.[0] || 'U'}
                     {(() => {
                         const res = results.find((r: any) => Number(r.user_id) === Number(player.id));
@@ -326,19 +326,19 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                       onClick={() => Number(player.id) === Number(currentUserId) && isMyTurn && setSelectedCardId(card.id)}
                       className={`relative aspect-[2/3] w-16 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl border-2 transition-all ${playingCard === card.id ? 'opacity-50 scale-95' : ''} ${selectedCardId === card.id ? 'ring-2 md:ring-4 ring-gold' : ''} ${Number(player.id) === Number(currentUserId) && isMyTurn ? 'cursor-pointer' : ''}`}
                       style={{ 
-                          boxShadow: selectedCardId === card.id ? `0 0 25px ${card.color}80` : `0 0 15px ${Number(player.id) === Number(currentUserId) ? card.color : (player.theme?.glow || 'rgba(148, 163, 184, 0.3)')}`,
-                          borderColor: Number(player.id) === Number(currentUserId) ? card.color : 'var(--card-border)' 
+                          boxShadow: selectedCardId === card.id ? `0 0 25px var(--gold)80` : `0 0 15px ${Number(player.id) === Number(currentUserId) ? (card.card_type === 'SONA' ? 'var(--gold)' : (card.color || 'var(--gold)')) : (player.theme?.glow || 'var(--gender-glow)')}`,
+                          borderColor: Number(player.id) === Number(currentUserId) ? (card.card_type === 'SONA' ? 'var(--gold)' : (card.color || 'var(--gold)')) : 'var(--card-border)' 
                       }}
                     >
-                      <div className={`h-full w-full rounded-[0.55rem] md:rounded-[0.9rem] p-[1px] transition-all`} style={{ background: Number(player.id) === Number(currentUserId) ? `linear-gradient(to bottom right, ${card.color}, ${card.color}40)` : `linear-gradient(to bottom right, var(--tw-gradient-from), var(--tw-gradient-to))` }}>
+                      <div className={`h-full w-full rounded-[0.55rem] md:rounded-[0.9rem] p-[1px] transition-all`} style={{ background: Number(player.id) === Number(currentUserId) ? `linear-gradient(to bottom right, ${card.card_type === 'SONA' ? 'var(--gold)' : (card.color || 'var(--gold)')}, ${card.card_type === 'SONA' ? 'var(--gold)40' : (card.color + '40' || 'var(--gold)40')})` : `linear-gradient(to bottom right, var(--tw-gradient-from), var(--tw-gradient-to))` }}>
                         <div className={`h-full w-full rounded-[0.5rem] md:rounded-[0.85rem] ${Number(player.id) === Number(currentUserId) ? 'bg-background/95' : 'bg-background/80 shadow-inner'} backdrop-blur-3xl p-1.5 md:p-3 flex flex-col items-center justify-center gap-1 overflow-hidden transition-colors`}>
                             {Number(player.id) === Number(currentUserId) ? (
                                 <>
                                     <div className="text-center">
-                                        <div className="text-[9px] md:text-[11px] font-black opacity-60 uppercase tracking-widest mb-1" style={{ color: card.color }}>
+                                        <div className="text-[9px] md:text-[11px] font-black opacity-60 uppercase tracking-widest mb-1" style={{ color: card.card_type === 'SONA' ? 'var(--gold)' : (card.color || 'var(--gold)') }}>
                                             {card.card_type}
                                         </div>
-                                        <div className={`text-sm md:text-2xl font-black bg-clip-text text-transparent leading-none`} style={{ backgroundImage: `linear-gradient(to bottom right, ${card.color}, var(--foreground))` }}>
+                                        <div className={`text-sm md:text-2xl font-black bg-clip-text text-transparent leading-none`} style={{ backgroundImage: `linear-gradient(to bottom right, ${card.card_type === 'SONA' ? 'var(--gold)' : (card.color || 'var(--gold)')}, var(--foreground))` }}>
                                             {card.value}
                                         </div>
                                     </div>

@@ -42,4 +42,4 @@ class AuthService:
                 "is_admin": user.is_admin
             }
         )
-        return Token(access_token=access_token, token_type="bearer")
+        return Token(access_token=access_token, token_type="bearer", gender=user.gender)
