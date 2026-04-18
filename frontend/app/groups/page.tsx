@@ -10,7 +10,7 @@ import GameArena from '@/app/components/GameArena';
 
 function GroupsContent() {
   const searchParams = useSearchParams();
-  const [groups, setGroups] = useState([]);
+  const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(searchParams.get('create') === 'true');
   const [newGroupName, setNewGroupName] = useState('');
@@ -25,7 +25,7 @@ function GroupsContent() {
   
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [groupMembers, setGroupMembers] = useState([]);
-  const [friends, setFriends] = useState([]);
+  const [friends, setFriends] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
