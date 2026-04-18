@@ -4,13 +4,13 @@ import React, { useEffect, useState, Suspense } from 'react';
 import Navbar from '@/app/components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swords, Shield, Loader2, Sparkles, Trophy, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import api from '@/app/services/apiService';
-import GameArena from '@/app/components/GameArena';
 
 function GameContent() {
+  const router = useRouter();
   const [activeMatches, setActiveMatches] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [enteringMatch, setEnteringMatch] = useState<any>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -51,17 +51,6 @@ function GameContent() {
       setLoading(false);
     }
   };
-
-  if (enteringMatch) {
-    return (
-      <GameArena 
-        groupId={enteringMatch.id} 
-        currentUserId={currentUserId!} 
-        groupMembers={enteringMatch.members} 
-        onClose={() => setEnteringMatch(null)} 
-      />
-    );
-  }
 
   return (
     <div className="flex bg-background text-text-primary">
@@ -108,7 +97,7 @@ function GameContent() {
                   </div>
 
                   <button 
-                    onClick={() => setEnteringMatch(match)}
+                    onClick={() => router.push(`/game/${match.id}`)}
                     className="flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-gold px-6 md:px-8 py-3 md:py-4 font-black text-black transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-gold/20 w-full md:w-auto relative z-10"
                   >
                     Enter Match
