@@ -22,10 +22,18 @@ def add_is_admin_column(session: Session):
     session.exec(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;"))
     session.commit()
 
+def add_card_color_fields(session: Session):
+    """Evolution 002: Add color column to cardtemplate and playercard."""
+    logger.info("Running Evolution 002: add_card_color_fields")
+    session.exec(text("ALTER TABLE cardtemplate ADD COLUMN IF NOT EXISTS color VARCHAR DEFAULT '#FFD700';"))
+    session.exec(text("ALTER TABLE playercard ADD COLUMN IF NOT EXISTS color VARCHAR DEFAULT '#FFD700';"))
+    session.commit()
+
 # --- Migration Registry ---
 # Order matters: oldest to newest
 MIGRATIONS = [
     {"name": "001_add_is_admin_column", "func": add_is_admin_column},
+    {"name": "002_add_card_color_fields", "func": add_card_color_fields},
 ]
 
 def run_migrations(session: Session):

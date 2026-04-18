@@ -33,6 +33,7 @@ async def update_card_template(
     
     db_card.name = card_data.name
     db_card.value = card_data.value
+    db_card.color = card_data.color
     
     session.add(db_card)
     session.commit()

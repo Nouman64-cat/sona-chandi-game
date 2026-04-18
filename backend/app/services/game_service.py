@@ -54,7 +54,7 @@ class GameService:
         
         # Fetch templates from DB
         templates = session.exec(select(CardTemplate).order_by(CardTemplate.card_type)).all()
-        template_map = {t.card_type: (t.name, t.value) for t in templates}
+        template_map = {t.card_type: (t.name, t.value, t.color) for t in templates}
         
         # Use only as many types as there are players
         # A, B, C, D maps to the order in card_types
@@ -63,9 +63,9 @@ class GameService:
         
         # 4 of each active type = total (4 * players)
         for key in active_type_keys:
-            name, val = template_map.get(key, (key, 100)) # Fallback
+            name, val, color = template_map.get(key, (key, 100, "#FFD700")) # Fallback
             for _ in range(4):
-                deck.append((name, val))
+                deck.append((name, val, color))
         
         # SHUFFLE
         random.shuffle(deck)
@@ -75,8 +75,8 @@ class GameService:
         for member in active_members:
             for _ in range(4):
                 if not deck: break
-                c_name, c_val = deck.pop()
-                card = PlayerCard(game_id=game.id, user_id=member.id, card_type=c_name, value=c_val)
+                c_name, c_val, c_color = deck.pop()
+                card = PlayerCard(game_id=game.id, user_id=member.id, card_type=c_name, value=c_val, color=c_color)
                 session.add(card)
 
         session.commit()

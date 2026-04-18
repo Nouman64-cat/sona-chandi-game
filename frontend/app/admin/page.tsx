@@ -58,7 +58,8 @@ export default function AdminDashboard() {
     try {
       await api.put(`/admin/cards/${card.id}`, {
         name: card.name,
-        value: Number(card.value)
+        value: Number(card.value),
+        color: card.color
       });
       setSuccessMsg(`Intelligence updated for ${card.card_type}!`);
       setTimeout(() => setSuccessMsg(null), 3000);
@@ -179,6 +180,34 @@ export default function AdminDashboard() {
                                     className="w-full rounded-xl bg-white/5 p-3 text-lg font-bold border border-transparent focus:border-gold/40 focus:bg-white/10 outline-none transition-all"
                                     placeholder="0"
                                 />
+                            </div>
+                            <div className="w-full md:w-48">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-text-secondary mb-2 block">Aura Color</label>
+                                <div className="flex items-center gap-3">
+                                    <div className="relative group/color shadow-lg shadow-black/20">
+                                        <input 
+                                            type="color" 
+                                            id={`color-${card.id}`}
+                                            value={card.color}
+                                            onChange={(e) => updateLocalCard(card.id, 'color', e.target.value)}
+                                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+                                        />
+                                        <div 
+                                            className="h-12 w-12 rounded-xl border border-white/10 ring-2 ring-transparent transition-all group-hover/color:ring-gold/30"
+                                            style={{ backgroundColor: card.color }}
+                                        />
+                                    </div>
+                                    <div className="flex-1 relative">
+                                        <input 
+                                            type="text" 
+                                            value={card.color}
+                                            onChange={(e) => updateLocalCard(card.id, 'color', e.target.value)}
+                                            className="w-full rounded-xl bg-white/5 p-3 pr-4 text-sm font-mono font-bold border border-transparent focus:border-gold/40 focus:bg-white/10 outline-none transition-all uppercase"
+                                            placeholder="#000000"
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: card.color }} />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

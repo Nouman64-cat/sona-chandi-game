@@ -95,6 +95,7 @@ class CardTemplate(SQLModel, table=True):
     card_type: str = Field(unique=True) # A, B, C, D, G
     name: str
     value: int
+    color: str = Field(default="#FFD700")
 
 class Game(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -113,6 +114,7 @@ class PlayerCard(SQLModel, table=True):
     is_played: bool = Field(default=False)
     # Visual preference/theme index 0-3
     theme_index: int = Field(default=0)
+    color: str = Field(default="#FFD700")
 
 class UserSearchResponse(UserRead):
     is_friend: bool = False
