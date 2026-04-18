@@ -145,7 +145,7 @@ export default function UserManagement() {
                 placeholder="Find a legend by name, username, or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-2xl bg-card p-4 pl-12 text-lg font-bold border border-white/5 focus:border-gold/40 outline-none transition-all shadow-xl"
+                className="w-full rounded-2xl bg-black/5 dark:bg-white/5 p-4 pl-12 text-lg font-bold text-text-primary border border-black/5 dark:border-white/5 focus:border-gold/40 outline-none transition-all shadow-xl"
              />
           </div>
 
@@ -156,15 +156,15 @@ export default function UserManagement() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className={`glass flex flex-col md:flex-row items-center justify-between p-6 rounded-[2rem] gap-6 border transition-all duration-300 ${user.id === currentUserId ? 'border-gold/20 bg-gold/5' : 'border-white/5 hover:border-gold/10'}`}
+                className={`glass flex flex-col md:flex-row items-center justify-between p-6 rounded-[2rem] gap-6 border transition-all duration-300 ${user.id === currentUserId ? 'border-gold/20 bg-gold/5' : 'border-black/5 dark:border-white/5 hover:border-gold/10'}`}
               >
                 <div className="flex items-center gap-6 w-full">
-                    <div className={`flex h-16 w-16 items-center justify-center rounded-[1.5rem] shadow-lg ${user.is_admin ? 'bg-gold text-black' : 'bg-white/5 text-text-secondary border border-white/10'}`}>
+                    <div className={`flex h-16 w-16 items-center justify-center rounded-[1.5rem] shadow-lg ${user.is_admin ? 'bg-gold text-black' : 'bg-black/5 dark:bg-white/5 text-text-secondary border border-black/10 dark:border-white/10'}`}>
                         {user.is_admin ? <Shield size={32} /> : <UserIcon size={32} />}
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 flex-wrap">
-                            <h3 className="text-xl font-black italic tracking-tight uppercase truncate">{user.full_name}</h3>
+                            <h3 className="text-xl font-black italic tracking-tight uppercase truncate text-text-primary">{user.full_name}</h3>
                             <span className="text-xs font-bold text-gold/60">@{user.username}</span>
                             {user.is_admin && (
                                 <span className="flex items-center gap-1 rounded-full bg-gold/10 px-3 py-1 text-[9px] font-black text-gold uppercase tracking-widest border border-gold/20">
@@ -172,7 +172,7 @@ export default function UserManagement() {
                                 </span>
                             )}
                             {user.id === currentUserId && (
-                                <span className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-[9px] font-black text-white uppercase tracking-widest border border-white/20">
+                                <span className="flex items-center gap-1 rounded-full bg-black/10 dark:bg-white/10 px-3 py-1 text-[9px] font-black text-text-primary uppercase tracking-widest border border-black/20 dark:border-white/20">
                                     YOU
                                 </span>
                             )}

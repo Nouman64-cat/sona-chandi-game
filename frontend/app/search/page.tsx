@@ -82,7 +82,7 @@ export default function SearchPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search username or name..."
-              className="w-full rounded-3xl border border-border-primary bg-card py-6 pl-16 pr-8 text-xl outline-none transition-all focus:border-gold/50 focus:bg-white/10"
+              className="w-full rounded-3xl border border-border-primary bg-black/5 dark:bg-white/5 py-6 pl-16 pr-8 text-xl outline-none transition-all focus:border-gold/50 focus:bg-white/10 text-text-primary placeholder:opacity-50"
             />
             {loading && <div className="absolute right-6 top-1/2 -translate-y-1/2"><Loader2 className="animate-spin text-gold" size={24} /></div>}
           </div>
@@ -111,14 +111,14 @@ export default function SearchPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.2 }}
-                  className="glass flex items-center justify-between rounded-3xl p-6"
+                  className="glass flex items-center justify-between rounded-3xl p-6 border border-black/5 dark:border-white/5"
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl font-bold uppercase ${user.is_self ? 'bg-gold/20 text-gold' : 'bg-silver/10 text-silver'}`}>
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl font-bold uppercase ${user.is_self ? 'bg-gold/20 text-gold' : 'bg-black/10 dark:bg-silver/10 text-text-secondary'}`}>
                       {user.username[0]}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2 font-bold">
+                      <div className="flex items-center gap-2 font-bold text-text-primary">
                         {user.full_name}
                         {user.is_self && <span className="rounded-md bg-gold/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-gold">You</span>}
                       </div>
@@ -130,7 +130,7 @@ export default function SearchPage() {
                     <button 
                       onClick={() => !user.is_friend && addFriend(user.id)}
                       disabled={addingId === user.id || user.is_friend}
-                      className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all ${user.is_friend ? 'bg-green-500/20 text-green-500 cursor-default' : 'bg-white/10 text-gold hover:bg-gold hover:text-black'}`}
+                      className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all ${user.is_friend ? 'bg-green-500/20 text-green-600 dark:text-green-500 cursor-default' : 'bg-black/10 dark:bg-white/10 text-gold-legible dark:text-gold hover:bg-gold hover:text-black'}`}
                     >
                       {addingId === user.id ? <Loader2 className="animate-spin" size={20} /> : (user.is_friend ? <Check size={20} /> : <UserPlus size={20} />)}
                     </button>
@@ -142,10 +142,10 @@ export default function SearchPage() {
 
           {!loading && results.length === 0 && query && (
              <div className="mt-20 text-center">
-                <div className="mx-auto mb-4 h-20 w-20 rounded-full bg-white/5 flex items-center justify-center text-zinc-700 uppercase tracking-widest">
+                <div className="mx-auto mb-4 h-20 w-20 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-text-secondary opacity-30 uppercase tracking-widest">
                     <Search size={40} />
                 </div>
-                <p className="text-text-secondary">No legends found matching "{query}"</p>
+                <p className="text-text-secondary font-medium">No legends found matching "{query}"</p>
              </div>
           )}
         </div>

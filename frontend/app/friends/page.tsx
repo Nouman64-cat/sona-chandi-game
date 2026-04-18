@@ -80,19 +80,19 @@ export default function FriendsPage() {
                         {friend.username[0]}
                       </div>
                       <div>
-                        <div className="font-bold">{friend.full_name}</div>
+                        <div className="font-bold text-text-primary">{friend.full_name}</div>
                         <div className="text-sm text-text-secondary">@{friend.username}</div>
                       </div>
                     </div>
                     
                     <div className="flex gap-2">
-                       <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-text-secondary hover:bg-white/10 hover:text-text-primary transition-all">
+                       <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-black/5 dark:bg-white/5 text-text-secondary hover:bg-black/10 dark:hover:bg-white/10 hover:text-text-primary transition-all">
                           <MessageSquare size={18} />
                        </button>
                        <button 
                         onClick={() => removeFriend(friend.id)}
                         disabled={removingId === friend.id}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-600 dark:text-red-500 hover:bg-red-500 hover:text-white transition-all"
                       >
                         {removingId === friend.id ? <Loader2 className="animate-spin" size={18} /> : <UserMinus size={18} />}
                       </button>

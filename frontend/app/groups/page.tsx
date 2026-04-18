@@ -163,7 +163,7 @@ function GroupsContent() {
             </div>
             <button 
                 onClick={() => setShowCreate(true)}
-                className="flex items-center gap-2 rounded-2xl bg-gold px-6 py-3 font-bold text-black transition-all hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 rounded-2xl bg-gold px-6 py-3 font-bold text-black transition-all hover:scale-105 active:scale-95 shadow-lg shadow-gold/20"
             >
                 <Plus size={20} />
                 Create Group
@@ -176,9 +176,9 @@ function GroupsContent() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="glass mb-12 rounded-3xl p-8"
+                className="glass mb-12 rounded-3xl p-8 border border-black/5 dark:border-white/5 shadow-2xl"
               >
-                 <h3 className="mb-6 text-xl font-bold">New Group Details</h3>
+                 <h3 className="mb-6 text-xl font-bold text-text-primary">New Group Details</h3>
                  <form onSubmit={handleCreateGroup} className="space-y-4">
                     <input 
                       type="text" 
@@ -186,19 +186,19 @@ function GroupsContent() {
                       onChange={(e) => setNewGroupName(e.target.value)}
                       placeholder="Group Name (e.g. Phoenix Elite)"
                       required
-                      className="w-full rounded-2xl border border-border-primary bg-card p-4 outline-none focus:border-gold/50"
+                      className="w-full rounded-2xl border border-border-primary bg-black/5 dark:bg-white/5 p-4 text-text-primary outline-none focus:border-gold/50"
                     />
                     <textarea 
                       value={newGroupDesc}
                       onChange={(e) => setNewGroupDesc(e.target.value)}
                       placeholder="Short description..."
-                      className="w-full rounded-2xl border border-border-primary bg-card p-4 outline-none focus:border-gold/50"
+                      className="w-full rounded-2xl border border-border-primary bg-black/5 dark:bg-white/5 p-4 text-text-primary outline-none focus:border-gold/50"
                     />
                     <div className="flex gap-4">
-                        <button type="submit" disabled={creating} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gold py-4 font-bold text-black">
+                        <button type="submit" disabled={creating} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gold py-4 font-bold text-black hover:scale-[1.02] transition-transform">
                             {creating ? <Loader2 className="animate-spin" /> : 'Confirm Creation'}
                         </button>
-                        <button type="button" onClick={() => setShowCreate(false)} className="rounded-2xl border border-border-primary px-8 font-bold">
+                        <button type="button" onClick={() => setShowCreate(false)} className="rounded-2xl border border-border-primary px-8 font-bold text-text-secondary hover:text-text-primary transition-colors">
                             Cancel
                         </button>
                     </div>
@@ -212,7 +212,7 @@ function GroupsContent() {
                 <div 
                     key={group.id} 
                     onClick={() => selectGroup(group)}
-                    className="glass rounded-3xl p-8 relative overflow-hidden group cursor-pointer transition-all hover:border-gold/30"
+                    className="glass rounded-3xl p-8 relative overflow-hidden group cursor-pointer transition-all hover:border-gold/30 border border-black/5 dark:border-white/5 shadow-xl hover:shadow-gold/5"
                 >
                     <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gold/10 blur-2xl transition-all group-hover:bg-gold/20" />
                     <div className="flex items-center justify-between mb-4">
@@ -221,7 +221,7 @@ function GroupsContent() {
                              <span className="rounded-lg bg-gold/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-gold border border-gold/20">Admin</span>
                         )}
                     </div>
-                    <h3 className="text-xl font-bold">{group.name}</h3>
+                    <h3 className="text-xl font-bold text-text-primary">{group.name}</h3>
                     <p className="mt-2 text-sm text-text-secondary line-clamp-2">{group.description || "No description provided."}</p>
                     <div className="mt-6 flex items-center justify-between">
                         <div className="flex items-center gap-2 text-text-secondary">
@@ -241,23 +241,23 @@ function GroupsContent() {
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6 backdrop-blur-sm"
                   >
-                      <motion.div 
-                        initial={{ scale: 0.9, y: 20 }}
-                        animate={{ scale: 1, y: 0 }}
-                        className="glass max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] p-8"
-                      >
-                          <div className="mb-8 flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                  <Shield className="text-gold" size={40} />
-                                  <div>
-                                      <h2 className="text-3xl font-bold">{selectedGroup.name}</h2>
-                                      <p className="text-text-secondary">{selectedGroup.description}</p>
+                          <motion.div 
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            className="glass max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] p-8 border border-black/10 dark:border-white/10 shadow-3xl"
+                          >
+                              <div className="mb-8 flex items-center justify-between">
+                                  <div className="flex items-center gap-4">
+                                      <Shield className="text-gold" size={40} />
+                                      <div>
+                                          <h2 className="text-3xl font-bold text-text-primary">{selectedGroup.name}</h2>
+                                          <p className="text-text-secondary">{selectedGroup.description}</p>
+                                      </div>
                                   </div>
+                                  <button onClick={() => setSelectedGroup(null)} className="rounded-full bg-black/5 dark:bg-white/5 p-2 text-text-secondary hover:text-text-primary transition-colors">
+                                      <X size={24} />
+                                  </button>
                               </div>
-                              <button onClick={() => setSelectedGroup(null)} className="rounded-full bg-white/5 p-2 text-text-secondary hover:text-text-primary">
-                                  <X size={24} />
-                              </button>
-                          </div>
 
                           <div className="grid gap-8 md:grid-cols-2">
                               {/* Left Column: Member List always visible to everyone */}

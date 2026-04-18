@@ -57,12 +57,12 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="glass rounded-3xl p-6 text-center"
+                className="glass rounded-3xl p-6 text-center border border-black/5 dark:border-white/5 shadow-xl hover:shadow-gold/5 transition-all"
               >
-                <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 ${stat.color}`}>
+                <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-black/5 dark:bg-white/5 ${stat.color === 'text-gold' ? 'text-gold-legible dark:text-gold' : stat.color}`}>
                   <stat.icon size={24} />
                 </div>
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-2xl font-bold text-text-primary">{stat.value}</div>
                 <div className="text-xs text-text-secondary uppercase tracking-wider">{stat.label}</div>
               </motion.div>
             ))}
@@ -72,16 +72,18 @@ export default function DashboardPage() {
             <motion.div 
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="glass rounded-3xl p-8"
+              className="glass rounded-3xl p-8 border border-black/5 dark:border-white/5 shadow-xl"
             >
-              <h3 className="mb-6 text-xl font-bold">Recent Activity</h3>
+              <h3 className="mb-6 text-xl font-bold text-text-primary">Recent Activity</h3>
               <div className="space-y-4">
                 {[1,2,3].map(i => (
-                  <div key={i} className="flex items-center gap-4 rounded-2xl bg-white/5 p-4">
-                    <div className="h-10 w-10 rounded-full bg-gold/20" />
+                  <div key={i} className="flex items-center gap-4 rounded-2xl bg-black/5 dark:bg-white/5 p-4 border border-black/5 dark:border-white/5">
+                    <div className="h-10 w-10 rounded-full bg-gold/10 flex items-center justify-center text-gold">
+                        <Sparkles size={16} />
+                    </div>
                     <div className="flex-1">
-                      <div className="text-sm font-medium">You added <span className="text-gold">Sultan</span> as a friend</div>
-                      <div className="text-xs text-text-secondary">2 hours ago</div>
+                      <div className="text-sm font-medium text-text-primary">New protocol initialized in <span className="text-gold">Phoenix Squad</span></div>
+                      <div className="text-xs text-text-secondary opacity-60">2 hours ago</div>
                     </div>
                   </div>
                 ))}
@@ -91,22 +93,22 @@ export default function DashboardPage() {
             <motion.div 
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="glass rounded-3xl p-8"
+              className="glass rounded-3xl p-8 border border-black/5 dark:border-white/5 shadow-xl"
             >
-              <h3 className="mb-6 text-xl font-bold">Quick Actions</h3>
+              <h3 className="mb-6 text-xl font-bold text-text-primary">Quick Actions</h3>
               <div className="grid grid-cols-1 gap-4">
-                <Link href="/game" className="flex items-center gap-4 rounded-2xl bg-gradient-to-r from-gold to-amber-600 p-4 font-bold text-black shadow-lg shadow-gold/20 transition-all hover:scale-[1.02] w-full relative overflow-hidden group">
+                <Link href="/groups" className="flex items-center gap-4 rounded-2xl bg-gradient-to-r from-gold to-amber-600 p-4 font-black text-black shadow-lg shadow-gold/20 transition-all hover:scale-[1.02] w-full relative overflow-hidden group">
                   <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   <Swords size={20} />
                   Enter Live Arena
                   <Sparkles size={16} className="ml-auto animate-pulse" />
                 </Link>
-                <Link href="/groups?create=true" className="flex items-center gap-4 rounded-2xl border border-border-primary p-4 font-bold transition-all hover:bg-white/5 w-full">
-                  <Shield size={20} />
+                <Link href="/groups?create=true" className="flex items-center gap-4 rounded-2xl border border-black/10 dark:border-white/10 p-4 font-bold text-text-primary transition-all hover:bg-black/5 dark:hover:bg-white/5 hover:border-gold/30 w-full group">
+                  <Shield size={20} className="text-text-secondary group-hover:text-gold transition-colors" />
                   Create New Group
                 </Link>
-                <Link href="/search" className="flex items-center gap-4 rounded-2xl border border-border-primary p-4 font-bold transition-all hover:bg-white/5 w-full">
-                  <Users size={20} />
+                <Link href="/friends" className="flex items-center gap-4 rounded-2xl border border-black/10 dark:border-white/10 p-4 font-bold text-text-primary transition-all hover:bg-black/5 dark:hover:bg-white/5 hover:border-gold/30 w-full group">
+                  <Users size={20} className="text-text-secondary group-hover:text-gold transition-colors" />
                   Find More Friends
                 </Link>
               </div>

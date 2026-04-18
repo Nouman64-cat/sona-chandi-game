@@ -112,7 +112,7 @@ export default function AdminDashboard() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gold/10 text-gold shadow-lg shadow-gold/10">
                     <Shield size={20} />
                 </div>
-                <h2 className="text-sm font-bold uppercase tracking-[0.3em] text-gold">Commander's Dashboard</h2>
+                <h2 className="text-sm font-bold uppercase tracking-[0.3em] text-gold dark:text-gold">Commander's Dashboard</h2>
             </div>
             <h1 className="text-4xl md:text-5xl font-black italic tracking-tighter uppercase mb-4">
               Arena <span className="silver-text">Intelligence</span>
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="mb-8 flex items-center gap-3 rounded-2xl bg-green-500/10 p-4 text-green-500 border border-green-500/20"
+                    className="mb-8 flex items-center gap-3 rounded-2xl bg-green-500/10 p-4 text-green-600 dark:text-green-500 border border-green-500/20"
                 >
                     <CheckCircle2 size={20} />
                     <span className="font-bold">{successMsg}</span>
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-8 flex items-center gap-3 rounded-2xl bg-red-500/10 p-4 text-red-500 border border-red-500/20"
+                    className="mb-8 flex items-center gap-3 rounded-2xl bg-red-500/10 p-4 text-red-600 dark:text-red-500 border border-red-500/20"
                 >
                     <AlertCircle size={20} />
                     <span className="font-bold">{error}</span>
@@ -151,7 +151,7 @@ export default function AdminDashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="glass relative overflow-hidden rounded-[2rem] p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border border-white/5 hover:border-gold/20 transition-all duration-500"
+                className="glass relative overflow-hidden rounded-[2rem] p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border border-black/5 dark:border-white/5 hover:border-gold/20 transition-all duration-500"
               >
                 <div className="flex items-center gap-6">
                     <div className="flex h-16 w-16 md:h-20 md:w-20 items-center justify-center rounded-3xl bg-gold/5 text-gold shadow-low border border-gold/10 relative group">
@@ -168,7 +168,7 @@ export default function AdminDashboard() {
                                     type="text" 
                                     value={card.name}
                                     onChange={(e) => updateLocalCard(card.id, 'name', e.target.value)}
-                                    className="w-full rounded-xl bg-white/5 p-3 text-lg font-bold border border-transparent focus:border-gold/40 focus:bg-white/10 outline-none transition-all"
+                                    className="w-full rounded-xl bg-black/5 dark:bg-white/5 p-3 text-lg font-bold text-text-primary border border-transparent focus:border-gold/40 focus:bg-white/10 outline-none transition-all"
                                     placeholder="e.g. Platinum"
                                 />
                             </div>
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
                                     type="number" 
                                     value={card.value}
                                     onChange={(e) => updateLocalCard(card.id, 'value', e.target.value)}
-                                    className="w-full rounded-xl bg-white/5 p-3 text-lg font-bold border border-transparent focus:border-gold/40 focus:bg-white/10 outline-none transition-all"
+                                    className="w-full rounded-xl bg-black/5 dark:bg-white/5 p-3 text-lg font-bold text-text-primary border border-transparent focus:border-gold/40 focus:bg-white/10 outline-none transition-all"
                                     placeholder="0"
                                 />
                             </div>
@@ -194,7 +194,7 @@ export default function AdminDashboard() {
                                             className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
                                         />
                                         <div 
-                                            className="h-12 w-12 rounded-xl border border-white/10 ring-2 ring-transparent transition-all group-hover/color:ring-gold/30"
+                                            className="h-12 w-12 rounded-xl border border-black/10 dark:border-white/10 ring-2 ring-transparent transition-all group-hover/color:ring-gold/30"
                                             style={{ backgroundColor: card.color }}
                                         />
                                     </div>
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
                                             type="text" 
                                             value={card.color}
                                             onChange={(e) => updateLocalCard(card.id, 'color', e.target.value)}
-                                            className="w-full rounded-xl bg-white/5 p-3 pr-4 text-sm font-mono font-bold border border-transparent focus:border-gold/40 focus:bg-white/10 outline-none transition-all uppercase"
+                                            className="w-full rounded-xl bg-black/5 dark:bg-white/5 p-3 pr-4 text-sm font-mono font-bold text-text-primary border border-transparent focus:border-gold/40 focus:bg-white/10 outline-none transition-all uppercase"
                                             placeholder="#000000"
                                         />
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: card.color }} />
@@ -232,7 +232,7 @@ export default function AdminDashboard() {
             ))}
 
             {cards.length === 0 && (
-                <div className="rounded-[3rem] border-2 border-dashed border-white/5 p-20 text-center">
+                <div className="rounded-[3rem] border-2 border-dashed border-black/5 dark:border-white/5 p-20 text-center">
                     <Loader2 className="animate-spin mx-auto text-gold mb-4" size={40} />
                     <p className="text-text-secondary font-bold uppercase tracking-widest">Awaiting Arena Protocols...</p>
                 </div>

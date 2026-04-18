@@ -233,19 +233,19 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                       onClick={() => Number(player.id) === Number(currentUserId) && isMyTurn && setSelectedCardId(card.id)}
                       className={`relative aspect-[2/3] w-16 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl border-2 transition-all ${playingCard === card.id ? 'opacity-50 scale-95' : ''} ${selectedCardId === card.id ? 'ring-2 md:ring-4 ring-gold' : ''} ${Number(player.id) === Number(currentUserId) && isMyTurn ? 'cursor-pointer' : ''}`}
                       style={{ 
-                          boxShadow: selectedCardId === card.id ? `0 0 25px ${card.color}80` : `0 0 15px ${Number(player.id) === Number(currentUserId) ? card.color : (player.theme?.glow || '#FFFFFF30')}`,
-                          borderColor: Number(player.id) === Number(currentUserId) ? card.color : 'rgba(255,255,255,0.2)' 
+                          boxShadow: selectedCardId === card.id ? `0 0 25px ${card.color}80` : `0 0 15px ${Number(player.id) === Number(currentUserId) ? card.color : (player.theme?.glow || 'rgba(148, 163, 184, 0.3)')}`,
+                          borderColor: Number(player.id) === Number(currentUserId) ? card.color : 'var(--card-border)' 
                       }}
                     >
-                      <div className={`h-full w-full rounded-[0.55rem] md:rounded-[0.9rem] p-[1px]`} style={{ background: Number(player.id) === Number(currentUserId) ? `linear-gradient(to bottom right, ${card.color}, ${card.color}40)` : `linear-gradient(to bottom right, var(--tw-gradient-from), var(--tw-gradient-to))` }}>
-                        <div className={`h-full w-full rounded-[0.5rem] md:rounded-[0.85rem] ${Number(player.id) === Number(currentUserId) ? 'bg-background/90' : 'bg-background/80 shadow-inner'} backdrop-blur-3xl p-1.5 md:p-3 flex flex-col items-center justify-center gap-1 overflow-hidden transition-colors`}>
+                      <div className={`h-full w-full rounded-[0.55rem] md:rounded-[0.9rem] p-[1px] transition-all`} style={{ background: Number(player.id) === Number(currentUserId) ? `linear-gradient(to bottom right, ${card.color}, ${card.color}40)` : `linear-gradient(to bottom right, var(--tw-gradient-from), var(--tw-gradient-to))` }}>
+                        <div className={`h-full w-full rounded-[0.5rem] md:rounded-[0.85rem] ${Number(player.id) === Number(currentUserId) ? 'bg-background/95' : 'bg-background/80 shadow-inner'} backdrop-blur-3xl p-1.5 md:p-3 flex flex-col items-center justify-center gap-1 overflow-hidden transition-colors`}>
                             {Number(player.id) === Number(currentUserId) ? (
                                 <>
                                     <div className="text-center">
                                         <div className="text-[9px] md:text-[11px] font-black opacity-60 uppercase tracking-widest mb-1" style={{ color: card.color }}>
                                             {card.card_type}
                                         </div>
-                                        <div className={`text-sm md:text-2xl font-black bg-clip-text text-transparent leading-none`} style={{ backgroundImage: `linear-gradient(to bottom right, ${card.color}, white)` }}>
+                                        <div className={`text-sm md:text-2xl font-black bg-clip-text text-transparent leading-none`} style={{ backgroundImage: `linear-gradient(to bottom right, ${card.color}, var(--foreground))` }}>
                                             {card.value}
                                         </div>
                                     </div>
@@ -255,7 +255,7 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                                 </>
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center opacity-40">
-                                    <Shield size={16} className="md:w-6 md:h-6 animate-pulse" style={{ color: player.theme?.from || 'inherit' }} />
+                                    <Shield size={16} className="md:w-6 md:h-6 animate-pulse" style={{ color: player.theme?.from || 'var(--text-secondary)' }} />
                                 </div>
                             )}
                         </div>

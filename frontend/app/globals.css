@@ -18,14 +18,15 @@
 }
 
 .light-theme {
-  --background: #fdfdfd;
-  --bg-secondary: #f4f4f5; /* zinc-100 */
-  --foreground: #09090b; /* zinc-950 */
-  --card-bg: rgba(255, 255, 255, 0.7);
-  --card-border: rgba(0, 0, 0, 0.08);
-  --text-primary: #09090b;
-  --text-secondary: #52525b; /* zinc-600 */
-  --nav-bg: rgba(255, 255, 255, 0.8);
+  --background: #f8fafc; /* slate-50 */
+  --bg-secondary: #f1f5f9; /* slate-100 */
+  --foreground: #0f172a; /* slate-900 */
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(148, 163, 184, 0.2); /* slate-400 with opacity */
+  --text-primary: #0f172a;
+  --text-secondary: #475569; /* slate-600 */
+  --nav-bg: rgba(248, 250, 252, 0.9);
+  --gold-legible: #967117; /* Darker gold for light mode text */
 }
 
 @theme inline {
@@ -33,6 +34,7 @@
   --color-bg-secondary: var(--bg-secondary);
   --color-foreground: var(--foreground);
   --color-gold: var(--gold);
+  --color-gold-legible: var(--gold-legible);
   --color-silver: var(--silver);
   --color-card: var(--card-bg);
   --color-border-primary: var(--card-border);
