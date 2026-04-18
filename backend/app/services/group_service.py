@@ -37,21 +37,26 @@ class GroupService:
 
     @staticmethod
     def delete_group(session: Session, group_id: int, admin_id: int):
+        from sqlalchemy import text
         group = session.get(Group, group_id)
         if not group:
-            raise HTTPException(status_code=404, detail="Group not found")
+            raise HTTPException(status_code=404, detail="Squad not found in the archives.")
         if group.creator_id != admin_id:
-            raise HTTPException(status_code=403, detail="Only the admin can delete this group")
+            raise HTTPException(status_code=403, detail="Only the Squad Commander can disband this formation.")
         
-        # Delete member associations first (clean cleanup)
-        statement = select(GroupMember).where(GroupMember.group_id == group_id)
-        memberships = session.exec(statement).all()
-        for m in memberships:
-            session.delete(m)
+        # 1. Purge match history ecosystem for this squad
+        # Delete cards associated with games of this group
+        session.exec(text("DELETE FROM playercard WHERE game_id IN (SELECT id FROM game WHERE group_id = :gid)").bindparams(gid=group_id))
+        # Delete the matches themselves
+        session.exec(text("DELETE FROM game WHERE group_id = :gid").bindparams(gid=group_id))
+        
+        # 2. Dissolve all squad memberships
+        session.exec(text("DELETE FROM groupmember WHERE group_id = :gid").bindparams(gid=group_id))
             
+        # 3. Finally, purge the squad record
         session.delete(group)
         session.commit()
-        return {"message": "Group deleted successfully"}
+        return {"message": "Squad has been disbanded and archived."}
 
     @staticmethod
     def add_member(session: Session, group_id: int, user_id: int, admin_id: int):

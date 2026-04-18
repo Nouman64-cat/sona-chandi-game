@@ -342,18 +342,21 @@ function GroupsContent() {
                                               Add Allies
                                           </h4>
                                           <div className="space-y-3 max-h-64 overflow-y-auto pr-2 pb-4">
-                                              {friends.map((friend: any) => (
-                                                  <div key={friend.id} className="flex items-center justify-between rounded-2xl border border-border-primary p-4 transition-all hover:bg-white/5">
-                                                      <span className="text-sm">{friend.full_name}</span>
+                                              {friends.filter(f => !groupMembers.some((m: any) => m.id === f.id)).map((friend: any) => (
+                                                  <div key={friend.id} className="flex items-center justify-between rounded-2xl border border-border-primary bg-black/5 dark:bg-white/5 p-4 transition-all hover:bg-gray-200 dark:hover:bg-white/10">
+                                                      <div className="flex flex-col">
+                                                          <span className="text-sm font-bold text-text-primary">{friend.full_name}</span>
+                                                          <span className="text-[10px] text-text-secondary font-mono">@{friend.username}</span>
+                                                      </div>
                                                       <button 
                                                         onClick={() => addMember(friend.id)}
-                                                        className="rounded-lg bg-gold/10 p-2 text-gold hover:bg-gold hover:text-black transition-all"
+                                                        className="rounded-lg bg-gold/10 p-2 text-gold hover:bg-gold hover:text-black transition-all border border-gold/10"
                                                       >
                                                           <Plus size={16} />
                                                       </button>
                                                   </div>
                                               ))}
-                                              {friends.length === 0 && <p className="text-xs text-text-secondary italic">No allies available to add.</p>}
+                                              {friends.filter(f => !groupMembers.some((m: any) => m.id === f.id)).length === 0 && <p className="text-xs text-text-secondary italic">No allies available to add.</p>}
                                           </div>
                                       </>
                                   ) : (
