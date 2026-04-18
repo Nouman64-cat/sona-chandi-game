@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, select, text
 from app.database.connection import get_session
-from app.models.user import User, CardTemplate
+from app.models.user import User, CardTemplate, Group
 from app.routes.auth import get_current_user
 from typing import List
 
@@ -39,3 +39,56 @@ async def update_card_template(
     session.commit()
     session.refresh(db_card)
     return db_card
+
+@router.get("/users")
+async def get_all_users(
+    session: Session = Depends(get_session),
+    admin: User = Depends(admin_required)
+):
+    """Fetch all legends for oversight."""
+    statement = select(User).order_by(User.full_name)
+    users = session.exec(statement).all()
+    # Mask passwords and return
+    return users
+
+@router.delete("/users/{user_id}")
+async def purge_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    admin: User = Depends(admin_required)
+):
+    """Permanently remove a legend from the Arena."""
+    if user_id == admin.id:
+        raise HTTPException(status_code=400, detail="A Commander cannot purge their own identity.")
+    
+    target_user = session.get(User, user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Legend not found in the archives.")
+
+    # 1. Dissolve all Friendships involving this legend
+    session.exec(text("DELETE FROM friendship WHERE user_id = :u OR friend_id = :u").bindparams(u=user_id))
+    
+    # 2. Identify squads owned by this legend and purge their entire ecosystem
+    # Fetch group IDs first to handle cascading sub-purges
+    owned_groups = session.exec(select(Group.id).where(Group.creator_id == user_id)).all()
+    if owned_groups:
+        group_ids = tuple(owned_groups)
+        # Purge match history for these squads
+        session.exec(text("DELETE FROM playercard WHERE game_id IN (SELECT id FROM game WHERE group_id IN :gids)").bindparams(gids=group_ids))
+        session.exec(text("DELETE FROM game WHERE group_id IN :gids").bindparams(gids=group_ids))
+        # Purge ALL memberships for these squads (not just the owner)
+        session.exec(text("DELETE FROM groupmember WHERE group_id IN :gids").bindparams(gids=group_ids))
+        # Finally, delete the squads themselves
+        session.exec(text("DELETE FROM \"group\" WHERE id IN :gids").bindparams(gids=group_ids))
+    
+    # 3. Resign from any other squads they were a member of
+    session.exec(text("DELETE FROM groupmember WHERE user_id = :u").bindparams(u=user_id))
+    
+    # 4. Terminate any remaining active match influence (personal cards in other matches)
+    session.exec(text("DELETE FROM playercard WHERE user_id = :u").bindparams(u=user_id))
+    
+    # 5. Final Purge of the User identity
+    session.delete(target_user)
+    session.commit()
+    
+    return {"status": "success", "message": f"Legend {target_user.username} has been removed from the archives."}

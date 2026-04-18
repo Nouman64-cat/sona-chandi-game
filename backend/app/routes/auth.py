@@ -37,3 +37,8 @@ def register(user_in: UserCreate, session: Session = Depends(get_session)):
 @router.post("/login", response_model=Token)
 def login(user_login: UserLogin, session: Session = Depends(get_session)):
     return AuthService.authenticate_user(session, user_login)
+
+@router.get("/me", response_model=UserRead)
+def get_me(current_user: User = Depends(get_current_user)):
+    """Security Handshake: Verify legend's identity still exists in the archives."""
+    return current_user

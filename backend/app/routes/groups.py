@@ -7,10 +7,16 @@ from app.services.group_service import GroupService
 
 router = APIRouter(prefix="/groups", tags=["Groups"])
 
+from app.routes.auth import get_current_user
+from app.models.user import User
+
 @router.get("/", response_model=List[GroupRead])
-def list_groups(session: Session = Depends(get_session)):
-    from sqlmodel import select
-    return session.exec(select(Group)).all()
+def list_groups(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Retrieve only the squads this legend is authorized to view."""
+    return current_user.groups
 
 @router.post("/", response_model=GroupRead)
 

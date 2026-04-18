@@ -43,7 +43,8 @@ const Navbar = () => {
     }
   }, []);
 
-  const adminItem = { label: 'Admin', icon: Settings, path: '/admin' };
+  const adminItem = { label: 'Intelligence', icon: Settings, path: '/admin' };
+  const adminUsersItem = { label: 'Oversight', icon: Users, path: '/admin/users' };
 
   return (
     <>
@@ -66,15 +67,27 @@ const Navbar = () => {
           ))}
           
           {userInfo?.isAdmin && (
-            <Link href={adminItem.path} className="group relative">
-              <div className={`flex items-center gap-4 rounded-xl p-3 transition-all duration-300 ${pathname === adminItem.path ? 'bg-gold/10 text-gold' : 'text-gold/60 hover:bg-gold/5 hover:text-gold'}`}>
-                <adminItem.icon size={24} />
-                <span className="hidden font-medium lg:block">{adminItem.label}</span>
-                {pathname === adminItem.path && (
-                  <motion.div layoutId="nav-pill" className="absolute -left-1 h-3/5 w-1 rounded-full bg-gold lg:left-0" />
-                )}
-              </div>
-            </Link>
+            <div className="mt-8 flex flex-col gap-2 w-full border-t border-white/5 pt-8">
+              <h3 className="hidden px-3 text-[10px] font-black uppercase tracking-[0.2em] text-gold/60 lg:block mb-2">Commander Hub</h3>
+              <Link href={adminItem.path} className="group relative">
+                <div className={`flex items-center gap-4 rounded-xl p-3 transition-all duration-300 ${pathname === adminItem.path ? 'bg-gold/10 text-gold' : 'text-gold/60 hover:bg-gold/5 hover:text-gold'}`}>
+                  <adminItem.icon size={24} />
+                  <span className="hidden font-medium lg:block">{adminItem.label}</span>
+                  {pathname === adminItem.path && (
+                    <motion.div layoutId="nav-pill" className="absolute -left-1 h-3/5 w-1 rounded-full bg-gold lg:left-0" />
+                  )}
+                </div>
+              </Link>
+              <Link href={adminUsersItem.path} className="group relative">
+                <div className={`flex items-center gap-4 rounded-xl p-3 transition-all duration-300 ${pathname === adminUsersItem.path ? 'bg-gold/10 text-gold' : 'text-gold/60 hover:bg-gold/5 hover:text-gold'}`}>
+                  <adminUsersItem.icon size={24} />
+                  <span className="hidden font-medium lg:block">{adminUsersItem.label}</span>
+                  {pathname === adminUsersItem.path && (
+                    <motion.div layoutId="nav-pill" className="absolute -left-1 h-3/5 w-1 rounded-full bg-gold lg:left-0" />
+                  )}
+                </div>
+              </Link>
+            </div>
           )}
         </div>
 
