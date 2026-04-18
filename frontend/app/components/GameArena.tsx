@@ -302,7 +302,7 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
             className="fixed bottom-6 md:bottom-12 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-white/10 p-2 md:p-4 px-4 md:px-8 backdrop-blur-xl border border-white/10"
           >
               <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs font-black uppercase tracking-widest text-text-secondary">
-                  <Loader2 className="animate-spin" size={12} className="md:w-[14px]" />
+                  <Loader2 className="animate-spin md:w-[14px]" size={12} />
                   Waiting for {playerGroups.find(p => p.isCurrentTurn)?.full_name.split(' ')[0] || "Legend"}...
               </div>
           </motion.div>
