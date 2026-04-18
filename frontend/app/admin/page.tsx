@@ -11,6 +11,7 @@ interface CardTemplate {
   card_type: string;
   name: string;
   value: number;
+  color: string;
 }
 
 export default function AdminDashboard() {
