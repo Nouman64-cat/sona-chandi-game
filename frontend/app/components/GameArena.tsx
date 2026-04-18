@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Users, Trophy, Loader2, Sparkles, LogOut, Swords, Star } from 'lucide-react';
+import { useTheme } from '@/app/components/ThemeProvider';
 import Confetti from './Confetti';
 
 interface GameArenaProps {
@@ -20,6 +21,7 @@ const THEMES = [
 ];
 
 export default function GameArena({ groupId, currentUserId, groupMembers, onClose }: GameArenaProps) {
+  const { gender, theme } = useTheme();
   const [gameState, setGameState] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [playingCard, setPlayingCard] = useState<number | null>(null);
@@ -316,45 +318,63 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
               </div>
 
               <div className="flex flex-wrap gap-2 md:gap-4 items-center justify-center w-full min-h-[120px] md:min-h-[160px] relative z-10">
-                {player.cards.map((card: any) => (
-                    <motion.div
-                      key={card.id}
-                      layout
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      whileHover={Number(player.id) === Number(currentUserId) && isMyTurn ? { scale: 1.05, y: -5 } : {}}
-                      onClick={() => Number(player.id) === Number(currentUserId) && isMyTurn && setSelectedCardId(card.id)}
-                      className={`relative aspect-[2/3] w-16 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl border-2 transition-all ${playingCard === card.id ? 'opacity-50 scale-95' : ''} ${selectedCardId === card.id ? 'ring-2 md:ring-4 ring-gold' : ''} ${Number(player.id) === Number(currentUserId) && isMyTurn ? 'cursor-pointer' : ''}`}
-                      style={{ 
-                          boxShadow: selectedCardId === card.id ? `0 0 25px var(--gold)80` : `0 0 15px ${Number(player.id) === Number(currentUserId) ? (card.card_type === 'SONA' ? 'var(--gold)' : (card.color || 'var(--gold)')) : (player.theme?.glow || 'var(--gender-glow)')}`,
-                          borderColor: Number(player.id) === Number(currentUserId) ? (card.card_type === 'SONA' ? 'var(--gold)' : (card.color || 'var(--gold)')) : 'var(--card-border)' 
-                      }}
-                    >
-                      <div className={`h-full w-full rounded-[0.55rem] md:rounded-[0.9rem] p-[1px] transition-all`} style={{ background: Number(player.id) === Number(currentUserId) ? `linear-gradient(to bottom right, ${card.card_type === 'SONA' ? 'var(--gold)' : (card.color || 'var(--gold)')}, ${card.card_type === 'SONA' ? 'var(--gold)40' : (card.color + '40' || 'var(--gold)40')})` : `linear-gradient(to bottom right, var(--tw-gradient-from), var(--tw-gradient-to))` }}>
-                        <div className={`h-full w-full rounded-[0.5rem] md:rounded-[0.85rem] ${Number(player.id) === Number(currentUserId) ? 'bg-background/95' : 'bg-background/80 shadow-inner'} backdrop-blur-3xl p-1.5 md:p-3 flex flex-col items-center justify-center gap-1 overflow-hidden transition-colors`}>
-                            {Number(player.id) === Number(currentUserId) ? (
-                                <>
-                                    <div className="text-center">
-                                        <div className="text-[9px] md:text-[11px] font-black opacity-60 uppercase tracking-widest mb-1" style={{ color: card.card_type === 'SONA' ? 'var(--gold)' : (card.color || 'var(--gold)') }}>
-                                            {card.card_type}
-                                        </div>
-                                        <div className={`text-sm md:text-2xl font-black bg-clip-text text-transparent leading-none`} style={{ backgroundImage: `linear-gradient(to bottom right, ${card.card_type === 'SONA' ? 'var(--gold)' : (card.color || 'var(--gold)')}, var(--foreground))` }}>
-                                            {card.value}
-                                        </div>
+                {player.cards.map((card: any) => {
+                    // Normalize and categorize card type
+                    const cardType = (card.card_type || '').toUpperCase();
+                    const isSona = cardType === 'SONA';
+                    const isChandi = cardType === 'CHANDI';
+                    const isMe = Number(player.id) === Number(currentUserId);
+                    
+                    // Determine the base color using system configuration with identity fallback
+                    let baseColor = card.color || 'var(--gold)';
+                    if (isSona) baseColor = 'var(--gold)'; // Maintain identity-shift for SONA archetypes
+                    
+                    // Determine text color strictly based on the global theme
+                    const textColorClass = theme === 'light' ? 'text-slate-950 font-black' : 'text-white font-black';
+                    
+                    // Contrast color for ally cards (not filled)
+                    const allyIconColor = theme === 'light' ? 'rgba(15, 23, 42, 0.4)' : 'rgba(255, 255, 255, 0.4)';
+
+                    return (
+                        <motion.div
+                          key={card.id}
+                          layout
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          whileHover={isMe && isMyTurn ? { scale: 1.05, y: -5 } : {}}
+                          onClick={() => isMe && isMyTurn && setSelectedCardId(card.id)}
+                          className={`relative aspect-[2/3] w-16 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl border-2 transition-all ${playingCard === card.id ? 'opacity-50 scale-95' : ''} ${selectedCardId === card.id ? 'ring-2 md:ring-4 ring-gold' : ''} ${isMe && isMyTurn ? 'cursor-pointer' : ''}`}
+                          style={{ 
+                              boxShadow: selectedCardId === card.id ? `0 0 25px var(--gold)80` : `0 0 15px ${isMe ? baseColor : (player.theme?.glow || 'var(--gender-glow)')}`,
+                              borderColor: isMe ? baseColor : 'var(--card-border)',
+                              backgroundColor: isMe ? baseColor : 'rgba(255,255,255,0.05)'
+                          }}
+                        >
+                          <div className={`h-full w-full rounded-[0.55rem] md:rounded-[0.9rem] flex flex-col items-center justify-center relative overflow-hidden`}>
+                            {/* Premium Shimmer Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
+                            
+                            {isMe ? (
+                                <div className={`flex flex-col items-center justify-center gap-1 z-10 ${textColorClass}`}>
+                                    <div className="text-[9px] md:text-[11px] uppercase tracking-widest opacity-60 mb-1">
+                                        {cardType}
                                     </div>
-                                    <div className="absolute bottom-1.5 right-1.5 md:bottom-2 md:right-2">
-                                        <Shield size={8} style={{ color: `${card.color}40` }} />
+                                    <div className="text-xl md:text-3xl tracking-tighter">
+                                        {card.value}
                                     </div>
-                                </>
+                                    <div className="absolute bottom-1.5 right-1.5 md:bottom-2 md:right-2 opacity-20">
+                                        <Shield size={10} />
+                                    </div>
+                                </div>
                             ) : (
-                                <div className="flex h-full w-full items-center justify-center opacity-40">
-                                    <Shield size={16} className="md:w-6 md:h-6 animate-pulse" style={{ color: player.theme?.from || 'var(--text-secondary)' }} />
+                                <div className="flex h-full w-full items-center justify-center z-10">
+                                    <Shield size={16} className="md:w-8 md:h-8 animate-pulse" style={{ color: allyIconColor }} />
                                 </div>
                             )}
-                        </div>
-                      </div>
-                    </motion.div>
-                ))}
+                          </div>
+                        </motion.div>
+                    );
+                })}
               </div>
 
               <div className="mt-4 md:mt-8 flex w-full items-center justify-between border-t border-white/5 pt-3 md:pt-4">
