@@ -8,7 +8,11 @@ app = FastAPI(title="Sona Chandi Game API")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Allow frontend origin
+    allow_origins=[
+        "http://localhost:3000",
+        "https://sona-chandi-game-xrz3.vercel.app",
+        "https://sona-chandi-game-xrz3.vercel.app/"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
