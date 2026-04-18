@@ -19,7 +19,19 @@ class GameService:
              raise HTTPException(status_code=403, detail="You must be a member of the squad to start a match")
 
 
-        # Check for active game
+        # 2. Check for Strategic Readiness (Full Squad Engagement)
+        # Fetch all memberships to verify readiness
+        members_stmt = select(GroupMember).where(GroupMember.group_id == group_id)
+        all_memberships = session.exec(members_stmt).all()
+        
+        not_ready_count = sum(1 for m in all_memberships if not m.is_ready)
+        if not_ready_count > 0:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Tactical integrity violation: {not_ready_count} legend(s) are not yet in the arena. All squad members must be ready to engage."
+            )
+
+        # 3. Check for active game
         statement = select(Game).where(Game.group_id == group_id, Game.status == "active")
         active_games = session.exec(statement).all()
         for old_game in active_games:
@@ -27,16 +39,14 @@ class GameService:
             session.add(old_game)
         session.commit()
 
-        # Verify at least 1 member (allowing 1-4 for testing, but target is 4)
+        # 4. Fetch all participants (the entire squad)
         statement = select(User).join(GroupMember).where(GroupMember.group_id == group_id)
-        members = session.exec(statement).all()
-        if len(members) < 1:
-            raise HTTPException(status_code=400, detail="Squad must have at least 1 member to start.")
+        active_members = session.exec(statement).all()
         
-        # Limit to 4 if more
-        active_members = members[:4]
+        if len(active_members) < 1:
+            raise HTTPException(status_code=400, detail="Squad must have at least 1 member to start.")
 
-        # Create Game
+        # 5. Create Game
         game = Game(
             group_id=group_id, 
             status="active", 
@@ -101,14 +111,24 @@ class GameService:
         res_stmt = select(GameResult).where(GameResult.game_id == game.id).order_by(GameResult.position)
         results = session.exec(res_stmt).all()
         
+        # Get player presence status
+        now = int(time.time())
+        presence_stmt = select(GroupMember.user_id, GroupMember.last_arena_heartbeat).where(GroupMember.group_id == game.group_id)
+        presence_results = session.exec(presence_stmt).all()
+        player_presence = {
+            str(uid): (last_hb is not None and (now - last_hb) < 30)
+            for uid, last_hb in presence_results
+        }
+        
         return {
             "game_id": game.id,
             "status": game.status,
             "current_turn_user_id": game.current_turn_user_id,
-            "winner_id_1": game.winner_id_1, # Deprecated but kept for safety
+            "winner_id_1": game.winner_id_1, 
             "winner_id_2": game.winner_id_2,
             "results": [r.model_dump() for r in results],
-            "cards": [card.model_dump() for card in cards]
+            "cards": [card.model_dump() for card in cards],
+            "player_presence": player_presence
         }
 
     @staticmethod

@@ -6,12 +6,9 @@ from pydantic import EmailStr
 # --- Link Tables ---
 
 class Friendship(SQLModel, table=True):
-    user_id: Optional[int] = Field(
-        default=None, foreign_key="user.id", primary_key=True
-    )
-    friend_id: Optional[int] = Field(
-        default=None, foreign_key="user.id", primary_key=True
-    )
+    user_id: int = Field(foreign_key="user.id", primary_key=True)
+    friend_id: int = Field(foreign_key="user.id", primary_key=True)
+    status: str = Field(default="pending") # pending, accepted
 
 class GroupMember(SQLModel, table=True):
     group_id: Optional[int] = Field(
@@ -20,6 +17,8 @@ class GroupMember(SQLModel, table=True):
     user_id: Optional[int] = Field(
         default=None, foreign_key="user.id", primary_key=True
     )
+    is_ready: bool = Field(default=False)
+    last_arena_heartbeat: Optional[int] = Field(default=None, sa_column=Column(Integer))
 
 # --- DB Models ---
 
@@ -50,6 +49,8 @@ class Group(SQLModel, table=True):
     name: str = Field(index=True)
     description: Optional[str] = None
     creator_id: int = Field(foreign_key="user.id")
+    invite_code: str = Field(index=True, unique=True, default_factory=lambda: "".join(__import__("uuid").uuid4().hex[:10]).upper())
+    invite_active: bool = Field(default=True)
     
     # Many-to-Many Members
     members: List[User] = Relationship(back_populates="groups", link_model=GroupMember)
@@ -89,6 +90,8 @@ class GroupCreate(GroupBase):
 class GroupRead(GroupBase):
     id: int
     creator_id: int
+    invite_code: Optional[str] = None
+    invite_active: bool = True
 
 # --- Game Models ---
 

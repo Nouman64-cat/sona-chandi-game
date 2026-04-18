@@ -59,6 +59,47 @@ def init_game_result_table(session: Session):
     SQLModel.metadata.create_all(session.bind, tables=[GameResult.__table__])
     session.commit()
 
+def add_friendship_status(session: Session):
+    """Evolution 005: Add status column to friendship table."""
+    logger.info("Running Evolution 005: add_friendship_status")
+    # 1. Add column with 'accepted' as default for existing records
+    session.exec(text("ALTER TABLE friendship ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'accepted';"))
+    session.commit()
+    
+    # 2. Ensure existing records are 'accepted' (redundant with DEFAULT but safe)
+    session.exec(text("UPDATE friendship SET status = 'accepted' WHERE status IS NULL;"))
+    session.commit()
+
+def add_group_beacon_fields(session: Session):
+    """Evolution 006: Add invite_code and invite_active to group table."""
+    logger.info("Running Evolution 006: add_group_beacon_fields")
+    # 1. Add columns
+    session.exec(text("ALTER TABLE \"group\" ADD COLUMN IF NOT EXISTS invite_code VARCHAR;"))
+    session.exec(text("ALTER TABLE \"group\" ADD COLUMN IF NOT EXISTS invite_active BOOLEAN DEFAULT TRUE;"))
+    session.commit()
+    
+    # 2. Generate unique codes for any groups missing them
+    import uuid
+    statement = text("SELECT id FROM \"group\" WHERE invite_code IS NULL")
+    groups_to_update = session.exec(statement).all()
+    for g_id in groups_to_update:
+        new_code = uuid.uuid4().hex[:10].upper()
+        session.exec(text("UPDATE \"group\" SET invite_code = :code WHERE id = :id").bindparams(code=new_code, id=g_id[0]))
+    
+    session.commit()
+
+def add_member_ready_field(session: Session):
+    """Evolution 007: Add is_ready to groupmember table."""
+    logger.info("Running Evolution 007: add_member_ready_field")
+    session.exec(text("ALTER TABLE groupmember ADD COLUMN IF NOT EXISTS is_ready BOOLEAN DEFAULT FALSE;"))
+    session.commit()
+
+def add_member_heartbeat_field(session: Session):
+    """Evolution 008: Add last_arena_heartbeat to groupmember table."""
+    logger.info("Running Evolution 008: add_member_heartbeat_field")
+    session.exec(text("ALTER TABLE groupmember ADD COLUMN IF NOT EXISTS last_arena_heartbeat INTEGER DEFAULT NULL;"))
+    session.commit()
+
 # --- Migration Registry ---
 # Order matters: oldest to newest
 MIGRATIONS = [
@@ -66,6 +107,10 @@ MIGRATIONS = [
     {"name": "002_add_card_color_fields", "func": add_card_color_fields},
     {"name": "003_add_multi_winner_fields", "func": add_multi_winner_fields},
     {"name": "004_init_game_result_table", "func": init_game_result_table},
+    {"name": "005_add_friendship_status", "func": add_friendship_status},
+    {"name": "006_add_group_beacon_fields", "func": add_group_beacon_fields},
+    {"name": "007_add_member_ready_field", "func": add_member_ready_field},
+    {"name": "008_add_member_heartbeat_field", "func": add_member_heartbeat_field},
 ]
 
 def run_migrations(session: Session):

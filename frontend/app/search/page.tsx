@@ -55,8 +55,8 @@ export default function SearchPage() {
       const userId = payload.sub;
 
       await api.post(`/friends/${userId}/add/${friendId}`);
-      // Refresh result to show as friend
-      setResults(results.map((r: any) => r.id === friendId ? { ...r, is_friend: true } : r) as any);
+      // Refresh result to show as pending
+      setResults(results.map((r: any) => r.id === friendId ? { ...r, is_pending: true } : r) as any);
     } catch (err) {
       console.error(err);
     } finally {
@@ -128,11 +128,25 @@ export default function SearchPage() {
                   
                   {!user.is_self && (
                     <button 
-                      onClick={() => !user.is_friend && addFriend(user.id)}
-                      disabled={addingId === user.id || user.is_friend}
-                      className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all ${user.is_friend ? 'bg-green-500/20 text-green-600 dark:text-green-500 cursor-default' : 'bg-black/10 dark:bg-white/10 text-gold-legible dark:text-gold hover:bg-gold hover:text-black'}`}
+                      onClick={() => !user.is_friend && !user.is_pending && addFriend(user.id)}
+                      disabled={addingId === user.id || user.is_friend || user.is_pending}
+                      className={`flex h-10 px-4 items-center justify-center rounded-xl transition-all ${
+                        user.is_friend 
+                          ? 'bg-green-500/20 text-green-600 dark:text-green-500 cursor-default' 
+                          : user.is_pending
+                          ? 'bg-gold/10 text-gold/60 cursor-default italic text-xs'
+                          : 'bg-black/10 dark:bg-white/10 text-gold-legible dark:text-gold hover:bg-gold hover:text-black'
+                      }`}
                     >
-                      {addingId === user.id ? <Loader2 className="animate-spin" size={20} /> : (user.is_friend ? <Check size={20} /> : <UserPlus size={20} />)}
+                      {addingId === user.id ? (
+                        <Loader2 className="animate-spin" size={20} />
+                      ) : user.is_friend ? (
+                        <Check size={20} />
+                      ) : user.is_pending ? (
+                        'Request Sent'
+                      ) : (
+                        <UserPlus size={20} />
+                      )}
                     </button>
                   )}
                 </motion.div>

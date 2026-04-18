@@ -34,8 +34,25 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
   useEffect(() => {
     fetchGameState();
     const interval = setInterval(fetchGameState, 2000);
-    return () => clearInterval(interval);
+    
+    // Arena Heartbeat Loop (Aggressive Sync)
+    const hbInterval = setInterval(sendHeartbeat, 3000);
+    sendHeartbeat(); // Initial pulse
+    
+    return () => {
+        clearInterval(interval);
+        clearInterval(hbInterval);
+    };
   }, [groupId]);
+
+  const sendHeartbeat = async () => {
+      try {
+          const { default: api } = await import('@/app/services/apiService');
+          await api.post(`/groups/${groupId}/heartbeat`);
+      } catch (err) {
+          console.error("Heartbeat sync failed:", err);
+      }
+  };
 
   const fetchGameState = async () => {
     try {
@@ -318,6 +335,20 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
               </div>
 
               <div className="flex flex-wrap gap-2 md:gap-4 items-center justify-center w-full min-h-[120px] md:min-h-[160px] relative z-10">
+                <AnimatePresence>
+                    {(Number(player.id) !== Number(currentUserId)) && (!gameState.player_presence || (!gameState.player_presence[String(player.id)] && !gameState.player_presence[player.id])) && (
+                        <motion.div 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute inset-x-0 inset-y-0 z-20 flex flex-col items-center justify-center rounded-[1rem] bg-black/60 backdrop-blur-md border border-white/10"
+                        >
+                            <Loader2 className="animate-spin text-gold mb-2" size={24} />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-primary px-4 text-center">Syncing legend presence...</span>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {player.cards.map((card: any) => {
                     // Normalize and categorize card type
                     const cardType = (card.card_type || '').toUpperCase();
@@ -336,20 +367,29 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                     const allyIconColor = theme === 'light' ? 'rgba(15, 23, 42, 0.4)' : 'rgba(255, 255, 255, 0.4)';
 
                     return (
-                        <motion.div
-                          key={card.id}
-                          layout
-                          initial={{ y: 20, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          whileHover={isMe && isMyTurn ? { scale: 1.05, y: -5 } : {}}
-                          onClick={() => isMe && isMyTurn && setSelectedCardId(card.id)}
-                          className={`relative aspect-[2/3] w-16 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl border-2 transition-all ${playingCard === card.id ? 'opacity-50 scale-95' : ''} ${selectedCardId === card.id ? 'ring-2 md:ring-4 ring-gold' : ''} ${isMe && isMyTurn ? 'cursor-pointer' : ''}`}
-                          style={{ 
-                              boxShadow: selectedCardId === card.id ? `0 0 25px var(--gold)80` : `0 0 15px ${isMe ? baseColor : (player.theme?.glow || 'var(--gender-glow)')}`,
-                              borderColor: isMe ? baseColor : 'var(--card-border)',
-                              backgroundColor: isMe ? baseColor : 'rgba(255,255,255,0.05)'
-                          }}
-                        >
+                        <div key={card.id} className="relative">
+                            <AnimatePresence>
+                                {/* Selection Arrow Removed */}
+                            </AnimatePresence>
+                            
+                            <motion.div
+                              layout
+                              initial={{ y: 20, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              whileHover={isMe && isMyTurn ? { scale: 1.05, y: -5 } : {}}
+                              onClick={() => {
+                                  if (isMe && isMyTurn && card.id) {
+                                      const cid = Number(card.id);
+                                      setSelectedCardId(prev => (prev !== null && Number(prev) === cid) ? null : cid);
+                                  }
+                              }}
+                              className={`relative aspect-[2/3] w-16 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl border-2 transition-all ${playingCard === card.id ? 'opacity-50 scale-95' : ''} ${selectedCardId !== null && Number(selectedCardId) === Number(card.id) ? 'ring-2 md:ring-4 ring-gold' : ''} ${isMe && isMyTurn ? 'cursor-pointer' : ''}`}
+                              style={{ 
+                                  boxShadow: selectedCardId !== null && Number(selectedCardId) === Number(card.id) ? `0 0 40px var(--gold)CC` : `0 0 15px ${isMe ? baseColor : (player.theme?.glow || 'var(--gender-glow)')}`,
+                                  borderColor: isMe ? baseColor : 'var(--card-border)',
+                                  backgroundColor: isMe ? baseColor : 'rgba(255,255,255,0.05)'
+                              }}
+                            >
                           <div className={`h-full w-full rounded-[0.55rem] md:rounded-[0.9rem] flex flex-col items-center justify-center relative overflow-hidden`}>
                             {/* Premium Shimmer Overlay */}
                             <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
@@ -372,7 +412,8 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                                 </div>
                             )}
                           </div>
-                        </motion.div>
+                            </motion.div>
+                        </div>
                     );
                 })}
               </div>

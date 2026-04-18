@@ -1,3 +1,4 @@
+import time
 from typing import List
 from fastapi import HTTPException, status
 from sqlmodel import Session, select
@@ -108,4 +109,74 @@ class GroupService:
         session.delete(membership)
         session.commit()
         return {"message": "Removed from squad successfully"}
+    @staticmethod
+    def join_by_beacon(session: Session, user_id: int, invite_code: str):
+        # 1. Find the group by beacon code
+        statement = select(Group).where(
+            (Group.invite_code == invite_code) & (Group.invite_active == True)
+        )
+        group = session.exec(statement).first()
+        if not group:
+            raise HTTPException(status_code=404, detail="Alliance Beacon is offline or the code is invalid.")
+            
+        # 2. Check if user is already a member
+        member_stmt = select(GroupMember).where(
+            (GroupMember.group_id == group.id) & (GroupMember.user_id == user_id)
+        )
+        if session.exec(member_stmt).first():
+            raise HTTPException(status_code=400, detail="Legend is already assigned to this squad.")
+            
+        # 3. Join the squad
+        new_member = GroupMember(group_id=group.id, user_id=user_id)
+        session.add(new_member)
+        session.commit()
+        
+        return {"message": f"Successfully joined squad: {group.name}", "group_id": group.id}
 
+    @staticmethod
+    def refresh_beacon(session: Session, group_id: int, admin_id: int):
+        import uuid
+        group = session.get(Group, group_id)
+        if not group:
+            raise HTTPException(status_code=404, detail="Squad not found.")
+        if group.creator_id != admin_id:
+            raise HTTPException(status_code=403, detail="Only the Squad Commander can recalibrate the Beacon.")
+            
+        # Generate new high-entropy code
+        new_code = uuid.uuid4().hex[:10].upper()
+        group.invite_code = new_code
+        session.add(group)
+        session.commit()
+        session.refresh(group)
+        
+        return {"message": "Alliance Beacon has been recalibrated.", "invite_code": new_code}
+
+    @staticmethod
+    def set_member_ready(session: Session, group_id: int, user_id: int, is_ready: bool):
+        statement = select(GroupMember).where(
+            (GroupMember.group_id == group_id) & (GroupMember.user_id == user_id)
+        )
+        membership = session.exec(statement).first()
+        if not membership:
+            raise HTTPException(status_code=404, detail="Legend is not a member of this squad.")
+            
+        membership.is_ready = is_ready
+        session.add(membership)
+        session.commit()
+        
+        status_text = "ready in the arena" if is_ready else "standing by"
+        return {"message": f"Legend is now {status_text}.", "is_ready": is_ready}
+
+    @staticmethod
+    def update_arena_presence(session: Session, group_id: int, user_id: int):
+        statement = select(GroupMember).where(
+            (GroupMember.group_id == group_id) & (GroupMember.user_id == user_id)
+        )
+        membership = session.exec(statement).first()
+        if not membership:
+            raise HTTPException(status_code=404, detail="Legend is not a member of this squad.")
+            
+        membership.last_arena_heartbeat = int(time.time())
+        session.add(membership)
+        session.commit()
+        return {"status": "synchronized"}

@@ -68,26 +68,47 @@ async def purge_user(
     # 1. Dissolve all Friendships involving this legend
     session.exec(text("DELETE FROM friendship WHERE user_id = :u OR friend_id = :u").bindparams(u=user_id))
     
-    # 2. Identify squads owned by this legend and purge their entire ecosystem
+    # 1. Purge Friendship Transmissions (Alliance History)
+    session.exec(text("DELETE FROM friendship WHERE user_id = :u OR friend_id = :u").bindparams(u=user_id))
+    
+    # 2. Clear Match History and Results
+    session.exec(text("DELETE FROM gameresult WHERE user_id = :u").bindparams(u=user_id))
+    
+    # 3. Neutralize active match influence in other squads
+    # Ensure no games are blocked by this user being the current turn holder or winner
+    session.exec(text("UPDATE game SET current_turn_user_id = NULL WHERE current_turn_user_id = :u").bindparams(u=user_id))
+    session.exec(text("UPDATE game SET winner_id_1 = NULL WHERE winner_id_1 = :u").bindparams(u=user_id))
+    session.exec(text("UPDATE game SET winner_id_2 = NULL WHERE winner_id_2 = :u").bindparams(u=user_id))
+
+    # 4. Identify squads owned by this legend and purge their entire ecosystem
     # Fetch group IDs first to handle cascading sub-purges
     owned_groups = session.exec(select(Group.id).where(Group.creator_id == user_id)).all()
     if owned_groups:
         group_ids = tuple(owned_groups)
-        # Purge match history for these squads
-        session.exec(text("DELETE FROM playercard WHERE game_id IN (SELECT id FROM game WHERE group_id IN :gids)").bindparams(gids=group_ids))
-        session.exec(text("DELETE FROM game WHERE group_id IN :gids").bindparams(gids=group_ids))
-        # Purge ALL memberships for these squads (not just the owner)
+        
+        # Explicitly fetch all game IDs associated with these squads to ensure precise targeting
+        game_ids = session.exec(select(Game.id).where(Game.group_id.in_(owned_groups))).all()
+        if game_ids:
+            g_ids = tuple(game_ids)
+            # Purge match artifacts (cards) for all participants in these matches
+            session.exec(text("DELETE FROM playercard WHERE game_id IN :gids").bindparams(gids=g_ids))
+            # Purge ALL match results (for all legends involved) for these matches
+            session.exec(text("DELETE FROM gameresult WHERE game_id IN :gids").bindparams(gids=g_ids))
+            # Dissolve the match records themselves
+            session.exec(text("DELETE FROM game WHERE id IN :gids").bindparams(gids=g_ids))
+            
+        # Purge ALL memberships for these squads
         session.exec(text("DELETE FROM groupmember WHERE group_id IN :gids").bindparams(gids=group_ids))
         # Finally, delete the squads themselves
         session.exec(text("DELETE FROM \"group\" WHERE id IN :gids").bindparams(gids=group_ids))
     
-    # 3. Resign from any other squads they were a member of
+    # 5. Resign from any other squads they were a member of
     session.exec(text("DELETE FROM groupmember WHERE user_id = :u").bindparams(u=user_id))
     
-    # 4. Terminate any remaining active match influence (personal cards in other matches)
+    # 6. Terminate any remaining active match influence (personal cards)
     session.exec(text("DELETE FROM playercard WHERE user_id = :u").bindparams(u=user_id))
     
-    # 5. Final Purge of the User identity
+    # 7. Final Purge of the User identity
     session.delete(target_user)
     session.commit()
     
