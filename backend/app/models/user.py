@@ -30,6 +30,7 @@ class User(SQLModel, table=True):
     gender: str
     number: str
     password: str
+    is_admin: bool = Field(default=False)
 
     # Many-to-Many Groups
     groups: List["Group"] = Relationship(back_populates="members", link_model=GroupMember)
@@ -88,6 +89,12 @@ class GroupRead(GroupBase):
     creator_id: int
 
 # --- Game Models ---
+
+class CardTemplate(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    card_type: str = Field(unique=True) # A, B, C, D, G
+    name: str
+    value: int
 
 class Game(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

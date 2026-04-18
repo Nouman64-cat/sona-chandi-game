@@ -36,6 +36,10 @@ class AuthService:
         
         access_token = create_access_token(
             subject=user.id, 
-            data={"username": user.username, "full_name": user.full_name}
+            data={
+                "username": user.username, 
+                "full_name": user.full_name,
+                "is_admin": user.is_admin
+            }
         )
         return Token(access_token=access_token, token_type="bearer")

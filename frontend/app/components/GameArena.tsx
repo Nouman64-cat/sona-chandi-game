@@ -221,16 +221,18 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                       className={`relative aspect-[2/3] w-16 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl transition-all ${player.theme.glow} ${playingCard === card.id ? 'opacity-50 scale-95' : ''} ${selectedCardId === card.id ? 'ring-2 md:ring-4 ring-gold' : ''} ${Number(player.id) === Number(currentUserId) && isMyTurn ? 'cursor-pointer' : ''}`}
                     >
                       <div className={`h-full w-full rounded-[0.55rem] md:rounded-[0.9rem] bg-gradient-to-br ${player.theme.from} ${player.theme.via} ${player.theme.to} p-[1px]`}>
-                        <div className={`h-full w-full rounded-[0.5rem] md:rounded-[0.85rem] ${Number(player.id) === Number(currentUserId) ? 'bg-background/90' : 'bg-background/80 shadow-inner'} backdrop-blur-3xl p-1.5 md:p-3 flex flex-col justify-between overflow-hidden`}>
+                        <div className={`h-full w-full rounded-[0.5rem] md:rounded-[0.85rem] ${Number(player.id) === Number(currentUserId) ? 'bg-background/90' : 'bg-background/80 shadow-inner'} backdrop-blur-3xl p-1.5 md:p-3 flex flex-col items-center justify-center gap-1 overflow-hidden`}>
                             {Number(player.id) === Number(currentUserId) ? (
                                 <>
-                                    <span className="text-[8px] md:text-[10px] font-black opacity-50 uppercase tracking-tighter">{card.card_type}</span>
                                     <div className="text-center">
-                                        <div className={`text-sm md:text-xl font-black bg-gradient-to-br ${player.theme.from} ${player.theme.to} bg-clip-text text-transparent`}>
+                                        <div className="text-[9px] md:text-[11px] font-black opacity-60 uppercase tracking-widest mb-1">
+                                            {card.card_type}
+                                        </div>
+                                        <div className={`text-sm md:text-2xl font-black bg-gradient-to-br ${player.theme.from} ${player.theme.to} bg-clip-text text-transparent leading-none`}>
                                             {card.value}
                                         </div>
                                     </div>
-                                    <div className="flex justify-end">
+                                    <div className="absolute bottom-1.5 right-1.5 md:bottom-2 md:right-2">
                                         <Shield size={8} className="text-gold/20" />
                                     </div>
                                 </>

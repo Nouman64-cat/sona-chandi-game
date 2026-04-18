@@ -48,22 +48,24 @@ class GameService:
         session.refresh(game)
 
         # Create Cards dynamic deck based on player count (exactly 4 * players)
+        from app.models.user import CardTemplate
         import random
         deck = []
-        card_types = [
-            ("A", 100),
-            ("B", 200),
-            ("C", 300),
-            ("D", 400)
-        ]
+        
+        # Fetch templates from DB
+        templates = session.exec(select(CardTemplate).order_by(CardTemplate.card_type)).all()
+        template_map = {t.card_type: (t.name, t.value) for t in templates}
         
         # Use only as many types as there are players
-        active_types = card_types[:len(active_members)]
+        # A, B, C, D maps to the order in card_types
+        type_keys = ["A", "B", "C", "D"]
+        active_type_keys = type_keys[:len(active_members)]
         
         # 4 of each active type = total (4 * players)
-        for c_type, c_val in active_types:
+        for key in active_type_keys:
+            name, val = template_map.get(key, (key, 100)) # Fallback
             for _ in range(4):
-                deck.append((c_type, c_val))
+                deck.append((name, val))
         
         # SHUFFLE
         random.shuffle(deck)
@@ -73,8 +75,8 @@ class GameService:
         for member in active_members:
             for _ in range(4):
                 if not deck: break
-                c_type, c_val = deck.pop()
-                card = PlayerCard(game_id=game.id, user_id=member.id, card_type=c_type, value=c_val)
+                c_name, c_val = deck.pop()
+                card = PlayerCard(game_id=game.id, user_id=member.id, card_type=c_name, value=c_val)
                 session.add(card)
 
         session.commit()

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Search, Users, Shield, LogOut, Sun, Moon, Swords } from 'lucide-react';
+import { Home, Search, Users, Shield, LogOut, Sun, Moon, Swords, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/app/components/ThemeProvider';
 
@@ -25,7 +25,7 @@ const Navbar = () => {
     { label: 'Arena', icon: Swords, path: '/game' },
   ];
 
-  const [userInfo, setUserInfo] = React.useState<{name: string, username: string} | null>(null);
+  const [userInfo, setUserInfo] = React.useState<{name: string, username: string, isAdmin: boolean} | null>(null);
 
   React.useEffect(() => {
     const token = localStorage.getItem('token');
@@ -34,13 +34,16 @@ const Navbar = () => {
         const payload = JSON.parse(atob(token.split('.')[1]));
         setUserInfo({
           name: payload.full_name || 'Legend',
-          username: payload.username || 'unknown'
+          username: payload.username || 'unknown',
+          isAdmin: !!payload.is_admin
         });
       } catch (e) {
         console.error("Token parse error", e);
       }
     }
   }, []);
+
+  const adminItem = { label: 'Admin', icon: Settings, path: '/admin' };
 
   return (
     <>
@@ -61,6 +64,18 @@ const Navbar = () => {
               </div>
             </Link>
           ))}
+          
+          {userInfo?.isAdmin && (
+            <Link href={adminItem.path} className="group relative">
+              <div className={`flex items-center gap-4 rounded-xl p-3 transition-all duration-300 ${pathname === adminItem.path ? 'bg-gold/10 text-gold' : 'text-gold/60 hover:bg-gold/5 hover:text-gold'}`}>
+                <adminItem.icon size={24} />
+                <span className="hidden font-medium lg:block">{adminItem.label}</span>
+                {pathname === adminItem.path && (
+                  <motion.div layoutId="nav-pill" className="absolute -left-1 h-3/5 w-1 rounded-full bg-gold lg:left-0" />
+                )}
+              </div>
+            </Link>
+          )}
         </div>
 
         <div className="mt-auto flex flex-col gap-4 w-full">
@@ -103,6 +118,17 @@ const Navbar = () => {
             </div>
           </Link>
         ))}
+
+        {userInfo?.isAdmin && (
+          <Link href={adminItem.path} className="relative flex flex-col items-center gap-1">
+            <div className={`rounded-xl p-2 transition-all ${pathname === adminItem.path ? 'text-gold' : 'text-gold/60'}`}>
+              <adminItem.icon size={24} />
+              {pathname === adminItem.path && (
+                <motion.div layoutId="nav-dot" className="absolute -bottom-1 h-1 w-1 rounded-full bg-gold" />
+              )}
+            </div>
+          </Link>
+        )}
         <button onClick={toggleTheme} className="flex flex-col items-center gap-1 p-2 text-text-secondary">
           {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
         </button>
