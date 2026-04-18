@@ -1,4 +1,5 @@
 from typing import List, Optional
+import time
 from sqlmodel import Field, Relationship, SQLModel, Column, Integer, ForeignKey
 from pydantic import EmailStr
 
@@ -102,7 +103,8 @@ class Game(SQLModel, table=True):
     group_id: int = Field(foreign_key="group.id")
     status: str = Field(default="active") # active, finished
     current_turn_user_id: Optional[int] = Field(default=None, foreign_key="user.id")
-    winner_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    winner_id_1: Optional[int] = Field(default=None, foreign_key="user.id")
+    winner_id_2: Optional[int] = Field(default=None, foreign_key="user.id")
     created_at: Optional[int] = Field(default=None) # Timestamp
 
 class PlayerCard(SQLModel, table=True):
@@ -115,6 +117,14 @@ class PlayerCard(SQLModel, table=True):
     # Visual preference/theme index 0-3
     theme_index: int = Field(default=0)
     color: str = Field(default="#FFD700")
+
+class GameResult(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    game_id: int = Field(foreign_key="game.id", index=True)
+    user_id: int = Field(foreign_key="user.id")
+    position: int # 1, 2, 3...
+    points: int # sum of 4 cards
+    created_at: int = Field(default_factory=lambda: int(time.time()))
 
 class UserSearchResponse(UserRead):
     is_friend: bool = False

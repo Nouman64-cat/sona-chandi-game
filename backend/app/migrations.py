@@ -29,11 +29,43 @@ def add_card_color_fields(session: Session):
     session.exec(text("ALTER TABLE playercard ADD COLUMN IF NOT EXISTS color VARCHAR DEFAULT '#FFD700';"))
     session.commit()
 
+def add_multi_winner_fields(session: Session):
+    """Evolution 003: Replace winner_id with winner_id_1 and winner_id_2."""
+    logger.info("Running Evolution 003: add_multi_winner_fields")
+    # 1. Add new columns
+    session.exec(text("ALTER TABLE game ADD COLUMN IF NOT EXISTS winner_id_1 INTEGER;"))
+    session.exec(text("ALTER TABLE game ADD COLUMN IF NOT EXISTS winner_id_2 INTEGER;"))
+    session.commit()
+    
+    # 2. Migrate existing data (Legacy winner_id -> winner_id_1)
+    # Check if winner_id exists via a try-except approach or information_schema 
+    # For robust manual migration, we just try to copy
+    try:
+        session.exec(text("UPDATE game SET winner_id_1 = winner_id WHERE winner_id IS NOT NULL;"))
+        session.commit()
+        logger.info("Legacy victory records migrated to position 1.")
+    except Exception as e:
+        logger.warning(f"Could not migrate legacy winner_id (might already be gone): {e}")
+
+    # 3. Note: In most production environments, we'd DROP the old column here.
+    # But for SQLite compatibility and safety in this sandbox, we'll keep it or ignore it.
+    # session.exec(text("ALTER TABLE game DROP COLUMN winner_id;"))
+
+def init_game_result_table(session: Session):
+    """Evolution 004: Initialize the gameresult table."""
+    logger.info("Running Evolution 004: init_game_result_table")
+    from app.models.user import GameResult
+    # Ensure the table exists
+    SQLModel.metadata.create_all(session.bind, tables=[GameResult.__table__])
+    session.commit()
+
 # --- Migration Registry ---
 # Order matters: oldest to newest
 MIGRATIONS = [
     {"name": "001_add_is_admin_column", "func": add_is_admin_column},
     {"name": "002_add_card_color_fields", "func": add_card_color_fields},
+    {"name": "003_add_multi_winner_fields", "func": add_multi_winner_fields},
+    {"name": "004_init_game_result_table", "func": init_game_result_table},
 ]
 
 def run_migrations(session: Session):

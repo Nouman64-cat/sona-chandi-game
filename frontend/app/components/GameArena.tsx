@@ -1,8 +1,9 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, Trophy, Loader2, Sparkles, LogOut, Swords } from 'lucide-react';
+import { Shield, Users, Trophy, Loader2, Sparkles, LogOut, Swords, Star } from 'lucide-react';
+import Confetti from './Confetti';
 
 interface GameArenaProps {
   groupId: number;
@@ -23,6 +24,10 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
   const [loading, setLoading] = useState(true);
   const [playingCard, setPlayingCard] = useState<number | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
+  const lastResultsCountRef = useRef(0);
+  const initializedRef = useRef(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [newWinner, setNewWinner] = useState<any>(null);
 
   useEffect(() => {
     fetchGameState();
@@ -34,7 +39,29 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
     try {
       const { default: api } = await import('@/app/services/apiService');
       const response = await api.get(`/games/state/${groupId}`);
-      setGameState(response.data);
+      const newState = response.data;
+      
+      const newResults = newState.results || [];
+      
+      if (!initializedRef.current) {
+        lastResultsCountRef.current = newResults.length;
+        initializedRef.current = true;
+      } else if (newResults.length > lastResultsCountRef.current) {
+        // Find the newest finisher
+        const newest = newResults.sort((a: any, b: any) => b.created_at - a.created_at)[0];
+        if (newest) {
+            const member = groupMembers.find(m => Number(m.id) === Number(newest.user_id));
+            setNewWinner({ ...newest, name: member?.full_name || "A Legend" });
+            setShowConfetti(true);
+            setTimeout(() => {
+                setShowConfetti(false);
+                setNewWinner(null);
+            }, 5000);
+        }
+        lastResultsCountRef.current = newResults.length;
+      }
+
+      setGameState(newState);
     } catch (err) {
       console.error(err);
     } finally {
@@ -111,32 +138,88 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
     return groupMembers.find(m => Number(m.id) === Number(targetId))?.full_name || "Ally";
   };
 
-  const winner = gameState.winner_id ? groupMembers.find(m => Number(m.id) === Number(gameState.winner_id)) : null;
+  const results = gameState.results || [];
+  const iHaveWon = results.some((r: any) => Number(r.user_id) === Number(currentUserId));
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-background md:p-6 lg:p-12 overflow-y-auto text-text-primary">
       <AnimatePresence>
-        {winner && (
+        {showConfetti && <Confetti />}
+        {newWinner && (
+            <motion.div
+                initial={{ y: -100, opacity: 0, scale: 0.5 }}
+                animate={{ y: 50, opacity: 1, scale: 1 }}
+                exit={{ y: -100, opacity: 0, scale: 0.5 }}
+                className="fixed top-0 left-1/2 z-[100] -translate-x-1/2 flex items-center gap-4 rounded-3xl bg-gold p-1 pr-6 shadow-[0_0_50px_rgba(255,215,0,0.5)] border-4 border-black/10"
+            >
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-gold">
+                    <Trophy size={24} />
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-black/60 leading-none mb-1">Victory Claimed!</span>
+                    <span className="text-sm font-black text-black">
+                        {newWinner.name} SECURED {newWinner.position === 1 ? "CHAMPION" : `${newWinner.position}${newWinner.position === 2 ? 'ND' : newWinner.position === 3 ? 'RD' : 'TH'}`} POSITION!
+                    </span>
+                </div>
+            </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {gameState.status === 'finished' && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute inset-0 z-[70] flex flex-col items-center justify-center bg-black/90 p-4 md:p-8 text-center backdrop-blur-xl"
+            className="absolute inset-0 z-[70] flex flex-col items-center justify-center bg-black/95 p-4 md:p-8 text-center backdrop-blur-2xl"
           >
             <motion.div
-              initial={{ scale: 0.5, y: 100 }}
+              initial={{ scale: 0.9, y: 50 }}
               animate={{ scale: 1, y: 0 }}
-              className="relative flex flex-col items-center w-full max-w-md"
+              className="relative flex flex-col items-center w-full max-w-3xl px-4"
             >
-              <div className="mb-8 flex h-32 w-32 md:h-40 md:w-40 items-center justify-center rounded-3xl bg-gold/10 text-gold shadow-[0_0_100px_rgba(255,215,0,0.3)] ring-1 ring-gold/20">
-                <Trophy size={60} className="md:w-20 md:h-20 animate-bounce" />
+              <div className="mb-8 flex h-20 w-20 md:h-24 md:w-24 items-center justify-center rounded-3xl bg-gold/10 text-gold shadow-[0_0_100px_rgba(255,215,0,0.3)] ring-1 ring-gold/20">
+                <Trophy size={40} className="md:w-12 md:h-12 animate-bounce" />
               </div>
-              <h2 className="text-3xl md:text-5xl font-black italic tracking-tighter uppercase mb-2">LEGEND CONQUERED</h2>
-              <p className="text-lg md:text-2xl font-bold gold-text mb-8">{winner.full_name} has claimed the victory!</p>
+              <h2 className="text-3xl md:text-5xl font-black italic tracking-tighter uppercase mb-2">ARENA LEADERBOARD</h2>
+              <p className="text-text-secondary uppercase tracking-[0.3em] font-bold text-[10px] mb-8">Official Match Standings</p>
+              
+              <div className="w-full space-y-3 mb-10 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+                  {[...(gameState.results || [])].sort((a: any, b: any) => a.position - b.position).map((res: any, idx: number) => {
+                      const member = groupMembers.find(m => Number(m.id) === Number(res.user_id));
+                      const isChampion = res.position === 1;
+                      const icons: any = { 1: "🥇", 2: "🥈", 3: "🥉" };
+                      
+                      return (
+                          <motion.div 
+                            key={res.user_id}
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: idx * 0.1 }}
+                            className={`flex items-center justify-between p-4 md:p-6 rounded-[1.5rem] border ${isChampion ? 'bg-gold/10 border-gold shadow-lg shadow-gold/5' : 'bg-white/5 border-white/5'}`}
+                          >
+                              <div className="flex items-center gap-4 md:gap-6">
+                                  <div className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl font-bold text-sm md:text-base ${isChampion ? 'bg-gold text-black shadow-lg shadow-gold/20' : 'bg-white/10 text-white border border-white/10'}`}>
+                                      {icons[res.position] || `#${res.position}`}
+                                  </div>
+                                  <div className="text-left">
+                                      <div className={`text-base md:text-xl font-black ${isChampion ? 'text-gold' : 'text-white'}`}>{member?.full_name || "Unknown Legend"}</div>
+                                      <div className="text-[10px] text-text-secondary font-bold uppercase tracking-widest">@{member?.username || "unknown"}</div>
+                                  </div>
+                              </div>
+                              <div className="text-right">
+                                  <div className="text-sm font-black text-text-secondary uppercase tracking-widest mb-0.5">Scored</div>
+                                  <div className={`text-xl md:text-2xl font-black ${isChampion ? 'text-gold' : 'text-white'}`}>{res.points} <span className="text-xs opacity-50">PTS</span></div>
+                              </div>
+                          </motion.div>
+                      );
+                  })}
+              </div>
+
               <button 
                 onClick={onClose}
                 className="w-full md:w-auto rounded-2xl bg-gold px-12 py-4 text-xl font-black text-black transition-all hover:scale-[1.05] shadow-2xl shadow-gold/20"
               >
-                DISMISS ARENA
+                RETURN TO HQ
               </button>
             </motion.div>
           </motion.div>
@@ -200,6 +283,16 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
               <div className="mb-4 md:mb-6 flex items-center gap-3 md:gap-4 self-start relative z-10">
                   <div className={`relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl bg-gradient-to-br ${player.theme.from} ${player.theme.to} text-black text-sm md:text-base font-black uppercase shadow-lg ${player.isCurrentTurn ? 'ring-4 ring-gold/40' : ''}`}>
                     {player.username?.[0] || 'U'}
+                    {(() => {
+                        const res = results.find((r: any) => Number(r.user_id) === Number(player.id));
+                        if (!res) return null;
+                        const icons: any = { 1: "🥇", 2: "🥈", 3: "🥉" };
+                        return (
+                            <div className="absolute -left-3 -top-3 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-gold shadow-lg border-2 border-background z-20 text-[12px] font-bold">
+                                {icons[res.position] || res.position}
+                            </div>
+                        );
+                    })()}
                     {player.isCurrentTurn && (
                         <span className="absolute -right-2 -top-2 flex h-4 w-4 md:h-5 md:w-5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
@@ -316,11 +409,20 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
           <motion.div 
             initial={{ y: 100 }}
             animate={{ y: 0 }}
-            className="fixed bottom-6 md:bottom-12 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-white/10 p-2 md:p-4 px-4 md:px-8 backdrop-blur-xl border border-white/10"
+            className="fixed bottom-6 md:bottom-12 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-black/60 p-2 md:p-4 px-4 md:px-8 backdrop-blur-xl border border-white/10 shadow-2xl"
           >
               <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs font-black uppercase tracking-widest text-text-secondary">
-                  <Loader2 className="animate-spin md:w-[14px]" size={12} />
-                  Waiting for {playerGroups.find(p => p.isCurrentTurn)?.full_name.split(' ')[0] || "Legend"}...
+                  {iHaveWon ? (
+                      <>
+                        <Trophy size={14} className="text-gold animate-bounce" />
+                        <span className="text-gold">Status: Victorious (Waiting for Runner Up...)</span>
+                      </>
+                  ) : (
+                      <>
+                        <Loader2 className="animate-spin md:w-[14px]" size={12} />
+                        Waiting for {playerGroups.find(p => p.isCurrentTurn)?.full_name.split(' ')[0] || "Legend"}...
+                      </>
+                  )}
               </div>
           </motion.div>
       )}

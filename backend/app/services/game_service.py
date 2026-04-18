@@ -95,17 +95,25 @@ class GameService:
         # Get all cards for this game
         statement = select(PlayerCard).where(PlayerCard.game_id == game.id)
         cards = session.exec(statement).all()
+
+        # Get results for this game
+        from app.models.user import GameResult
+        res_stmt = select(GameResult).where(GameResult.game_id == game.id).order_by(GameResult.position)
+        results = session.exec(res_stmt).all()
         
         return {
             "game_id": game.id,
             "status": game.status,
             "current_turn_user_id": game.current_turn_user_id,
-            "winner_id": game.winner_id,
+            "winner_id_1": game.winner_id_1, # Deprecated but kept for safety
+            "winner_id_2": game.winner_id_2,
+            "results": [r.model_dump() for r in results],
             "cards": [card.model_dump() for card in cards]
         }
 
     @staticmethod
     def play_turn(session: Session, game_id: int, user_id: int, card_id: int):
+        from app.models.user import GameResult
         game = session.get(Game, game_id)
         if not game or game.status != "active":
             raise HTTPException(status_code=404, detail="Active match not found")
@@ -117,8 +125,7 @@ class GameService:
         if not card or card.user_id != user_id:
             raise HTTPException(status_code=400, detail="You do not own this card.")
 
-        # Determine next player in the squad cycle
-        # We'll use the IDs of members in the group, ordered ascending
+        # Determine squad member IDs
         members_stmt = select(GroupMember).where(GroupMember.group_id == game.group_id).order_by(GroupMember.user_id)
         memberships = session.exec(members_stmt).all()
         member_ids = [m.user_id for m in memberships]
@@ -127,35 +134,96 @@ class GameService:
             raise HTTPException(status_code=400, detail="Player not in this squad.")
             
         current_idx = member_ids.index(user_id)
-        next_idx = (current_idx + 1) % len(member_ids)
-        next_user_id = member_ids[next_idx]
+        
+        # Determine who has already finished (GameResults)
+        existing_results_stmt = select(GameResult).where(GameResult.game_id == game_id)
+        existing_results = session.exec(existing_results_stmt).all()
+        finished_user_ids = [r.user_id for r in existing_results]
 
-        # Transfer Card
+        # 1. Skip logic: Find next player who hasn't finished yet
+        active_ids = [mid for mid in member_ids if mid not in finished_user_ids]
+        
+        if not active_ids:
+            game.status = "finished"
+            session.add(game)
+            session.commit()
+            return game
+
+        # Calculate next turn (skipping finished players)
+        potential_index = (current_idx + 1) % len(member_ids)
+        while member_ids[potential_index] in finished_user_ids:
+            potential_index = (potential_index + 1) % len(member_ids)
+        next_user_id = member_ids[potential_index]
+
+        # 2. Perform Transfer
         card.user_id = next_user_id
         session.add(card)
         
-        # Check Win Condition for the player who just played or the one who received?
-        # Actually, check ALL players in this game for 4 of a kind
+        # 3. Check Victory (4-of-a-kind) for active players
         for m_id in member_ids:
-            card_counts_stmt = select(PlayerCard).where(PlayerCard.game_id == game_id, PlayerCard.user_id == m_id)
-            p_cards = session.exec(card_counts_stmt).all()
+            if m_id in finished_user_ids: continue
             
-            # Group by card_type
+            p_cards_stmt = select(PlayerCard).where(PlayerCard.game_id == game_id, PlayerCard.user_id == m_id)
+            p_cards = session.exec(p_cards_stmt).all()
+            
             type_counts = {}
             for pc in p_cards:
                 type_counts[pc.card_type] = type_counts.get(pc.card_type, 0) + 1
             
             for c_type, count in type_counts.items():
-                if count >= 4:
-                    game.status = "finished"
-                    game.winner_id = m_id
-                    game.current_turn_user_id = None
-                    session.add(game)
-                    session.commit()
-                    return game
+                if count >= 4 and len(p_cards) == 4:
+                    # ACHIEVEMENT: New placement determined!
+                    next_pos = len(finished_user_ids) + 1
+                    total_points = sum(c.value for c in p_cards)
+                    
+                    new_res = GameResult(game_id=game_id, user_id=m_id, position=next_pos, points=total_points)
+                    session.add(new_res)
+                    finished_user_ids.append(m_id)
+                    
+                    # Backwards compatibility update
+                    if next_pos == 1: game.winner_id_1 = m_id
+                    elif next_pos == 2: game.winner_id_2 = m_id
+                    
+                    # Logically remove from active rotation
+                    active_ids = [aid for aid in active_ids if aid != m_id]
 
-        # If no win, update turn
-        game.current_turn_user_id = next_user_id
+        # 4. Termination Logic: If only 2 active players remain, end the game!
+        if len(active_ids) <= 2:
+            # Game concluudes immediately
+            game.status = "finished"
+            game.current_turn_user_id = None
+            
+            # Record results for the remaining 2 legends based on their current points
+            # We sort them by points descending for their final positions
+            remaining_data = []
+            for mid in active_ids:
+                pc_stmt = select(PlayerCard).where(PlayerCard.game_id == game_id, PlayerCard.user_id == mid)
+                cards = session.exec(pc_stmt).all()
+                remaining_data.append({"user_id": mid, "points": sum(c.value for c in cards)})
+            
+            # Sort remaining players by points to assign positions
+            remaining_data.sort(key=lambda x: x["points"], reverse=True)
+            
+            for idx, data in enumerate(remaining_data):
+                final_pos = len(finished_user_ids) + 1
+                final_res = GameResult(game_id=game_id, user_id=data["user_id"], position=final_pos, points=data["points"])
+                session.add(final_res)
+                finished_user_ids.append(data["user_id"])
+                
+                # Update legacy fields if applicable (e.g. 2nd place if game ended at 3)
+                if final_pos == 2: game.winner_id_2 = data["user_id"]
+        else:
+            # Ensure next_user_id is still valid (not newly finished)
+            if next_user_id in finished_user_ids:
+                 # Re-find next turn among survivors
+                 cur_idx = member_ids.index(user_id)
+                 pot_idx = (cur_idx + 1) % len(member_ids)
+                 while member_ids[pot_idx] in finished_user_ids:
+                      pot_idx = (pot_idx + 1) % len(member_ids)
+                 next_user_id = member_ids[pot_idx]
+            
+            game.current_turn_user_id = next_user_id
+
         session.add(game)
         session.commit()
         session.refresh(game)
