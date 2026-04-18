@@ -180,36 +180,49 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
           {playerGroups.map((player) => (
             <motion.div 
               key={player.id}
-              className={`glass rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 relative overflow-hidden flex flex-col items-center border transition-all duration-500 ${player.isCurrentTurn ? 'bg-gold/5 border-gold/40 shadow-[0_0_50px_rgba(255,215,0,0.1)]' : 'border-white/5'}`}
+              initial={player.isCurrentTurn ? { borderColor: "rgba(255,215,0,1)" } : {}}
+              animate={player.isCurrentTurn ? { 
+                boxShadow: [
+                  "0 0 15px 2px rgba(255,215,0,0.4)",
+                  "0 0 25px 4px rgba(255,215,0,0.6)",
+                  "0 0 15px 2px rgba(255,215,0,0.4)"
+                ]
+              } : {}}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              className={`glass rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 relative overflow-hidden flex flex-col items-center transition-all duration-500 border-2 ${player.isCurrentTurn ? 'bg-gold/10 border-gold' : 'border-white/5 opacity-80'}`}
             >
-              <div className={`absolute -right-16 -top-16 h-32 w-32 md:h-48 md:w-48 rounded-full bg-gradient-to-br ${player.theme.from} ${player.theme.to} opacity-10 blur-2xl md:blur-3xl`} />
+              {player.isCurrentTurn && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gold/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+              )}
               
-              <div className="mb-4 md:mb-6 flex items-center gap-3 md:gap-4 self-start">
-                  <div className={`relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl bg-gradient-to-br ${player.theme.from} ${player.theme.to} text-black text-sm md:text-base font-black uppercase`}>
+              <div className={`absolute -right-16 -top-16 h-32 w-32 md:h-48 md:w-48 rounded-full bg-gradient-to-br ${player.theme.from} ${player.theme.to} ${player.isCurrentTurn ? 'opacity-30' : 'opacity-10'} blur-2xl md:blur-3xl`} />
+              
+              <div className="mb-4 md:mb-6 flex items-center gap-3 md:gap-4 self-start relative z-10">
+                  <div className={`relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl bg-gradient-to-br ${player.theme.from} ${player.theme.to} text-black text-sm md:text-base font-black uppercase shadow-lg ${player.isCurrentTurn ? 'ring-4 ring-gold/40' : ''}`}>
                     {player.username?.[0] || 'U'}
                     {player.isCurrentTurn && (
-                        <span className="absolute -right-1 -top-1 flex h-3 w-3 md:h-4 md:w-4">
+                        <span className="absolute -right-2 -top-2 flex h-4 w-4 md:h-5 md:w-5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 md:h-4 md:w-4 bg-gold"></span>
+                          <span className="relative inline-flex rounded-full h-4 w-4 md:h-5 md:w-5 bg-gold border-2 border-background"></span>
                         </span>
                     )}
                   </div>
                   <div>
-                    <h3 className="text-base md:text-lg font-black tracking-tight">{player.full_name}</h3>
+                    <h3 className={`text-base md:text-lg font-black tracking-tight ${player.isCurrentTurn ? 'text-gold' : ''}`}>{player.full_name}</h3>
                     <div className="flex items-center gap-2">
                         <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest ${Number(player.id) === Number(currentUserId) ? 'text-gold' : 'text-text-secondary'}`}>
                             {Number(player.id) === Number(currentUserId) ? 'YOU' : 'ALLY'}
                         </span>
                         {player.isCurrentTurn && (
-                            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gold italic flex items-center gap-1">
-                                <Sparkles size={8} /> ACTING...
+                            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gold italic flex items-center gap-1 bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20">
+                                <Sparkles size={8} /> CURRENT TURN
                             </span>
                         )}
                     </div>
                   </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 md:gap-4 items-center justify-center w-full min-h-[120px] md:min-h-[160px]">
+              <div className="flex flex-wrap gap-2 md:gap-4 items-center justify-center w-full min-h-[120px] md:min-h-[160px] relative z-10">
                 {player.cards.map((card: any) => (
                     <motion.div
                       key={card.id}
