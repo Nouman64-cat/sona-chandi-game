@@ -20,7 +20,7 @@ import api from '@/app/services/apiService';
 
 interface UserRecord {
   id: number;
-  full_name: str;
+  full_name: string;
   username: string;
   email: string;
   gender: string;
