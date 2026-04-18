@@ -47,8 +47,7 @@ class GameService:
         session.commit()
         session.refresh(game)
 
-        # Create Cards for each member
-        # DECK: 4 sets of 4 + 1 extra "Sona" card = 17 cards
+        # Create Cards dynamic deck based on player count (exactly 4 * players)
         import random
         deck = []
         card_types = [
@@ -58,39 +57,25 @@ class GameService:
             ("D", 400)
         ]
         
-        # 4 of each type
-        for c_type, c_val in card_types:
+        # Use only as many types as there are players
+        active_types = card_types[:len(active_members)]
+        
+        # 4 of each active type = total (4 * players)
+        for c_type, c_val in active_types:
             for _ in range(4):
                 deck.append((c_type, c_val))
-        
-        # 17th card: "Sona" (Wild/Extra)
-        deck.append(("G", 500)) 
         
         # SHUFFLE
         random.shuffle(deck)
         
         # DISTRIBUTE
-        # Give 5 cards to requestor first
-        for _ in range(5):
-             if not deck: break
-             c_type, c_val = deck.pop()
-             card = PlayerCard(game_id=game.id, user_id=requestor_id, card_type=c_type, value=c_val)
-             session.add(card)
-        
-        # Give 4 cards to others
-        other_members = [m for m in active_members if m.id != requestor_id]
-        for member in other_members:
+        # Give exactly 4 cards to every participant
+        for member in active_members:
             for _ in range(4):
                 if not deck: break
                 c_type, c_val = deck.pop()
                 card = PlayerCard(game_id=game.id, user_id=member.id, card_type=c_type, value=c_val)
                 session.add(card)
-        
-        # Any remaining cards (in case of fewer players)
-        while deck:
-            c_type, c_val = deck.pop()
-            card = PlayerCard(game_id=game.id, user_id=requestor_id, card_type=c_type, value=c_val)
-            session.add(card)
 
         session.commit()
         return game

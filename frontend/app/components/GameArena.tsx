@@ -264,13 +264,15 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
           <motion.div 
             initial={{ y: 100 }}
             animate={{ y: 0 }}
-            className="fixed bottom-12 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center gap-4"
+            className="fixed bottom-12 left-1/2 z-[80] flex -translate-x-1/2 flex-col items-center gap-4"
           >
              <div className="flex items-center gap-6 rounded-[2rem] bg-black/80 p-4 px-8 backdrop-blur-2xl border border-white/10 shadow-2xl">
                 {!selectedCardId ? (
                     <div className="flex items-center gap-3 text-sm font-black text-gold uppercase tracking-widest italic text-center">
                         <Sparkles className="hidden md:block animate-pulse" />
-                        IDENTIFY YOUR INFLUENCE... SELECT A CARD
+                        {playerGroups.find(p => Number(p.id) === Number(currentUserId))?.cards.length === 4 
+                            ? "INITIATE THE BATTLE... PASS A CARD" 
+                            : "YOU HOLD THE INFLUENCE... SELECT TO PASS"}
                     </div>
                 ) : (
                     <div className="flex items-center gap-8">
@@ -295,7 +297,7 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
           <motion.div 
             initial={{ y: 100 }}
             animate={{ y: 0 }}
-            className="fixed bottom-12 left-1/2 z-50 -translate-x-1/2 rounded-full bg-white/5 p-4 px-8 backdrop-blur-xl border border-white/5"
+            className="fixed bottom-12 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-white/5 p-4 px-8 backdrop-blur-xl border border-white/5"
           >
               <div className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-text-secondary">
                   <Loader2 className="animate-spin" size={14} />
