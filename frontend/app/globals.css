@@ -26,15 +26,15 @@
 }
 
 .light-theme {
-  --background: #f8fafc; /* slate-50 */
-  --bg-secondary: #f1f5f9; /* slate-100 */
-  --foreground: #0f172a; /* slate-900 */
-  --card-bg: rgba(255, 255, 255, 0.9);
-  --card-border: rgba(148, 163, 184, 0.2); /* slate-400 with opacity */
-  --text-primary: #0f172a;
-  --text-secondary: #475569; /* slate-600 */
-  --nav-bg: rgba(248, 250, 252, 0.9);
-  --gold-legible: #967117; /* Darker gold for light mode text */
+  --background: #ffffff;
+  --bg-secondary: #fafafa; /* zinc-50 approx */
+  --foreground: #09090b; /* zinc-950 */
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --card-border: rgba(9, 9, 11, 0.05); /* very subtle dark border */
+  --text-primary: #09090b;
+  --text-secondary: #52525b; /* zinc-600 */
+  --nav-bg: rgba(255, 255, 255, 0.9);
+  --gold-legible: #967117; 
 }
 
 /* Gender Overrides */
@@ -76,8 +76,6 @@
 
 .bg-background {
   background-color: var(--background);
-  background-image: radial-gradient(circle at top right, var(--gender-tint), transparent 75%),
-                    radial-gradient(circle at bottom left, var(--gender-tint), transparent 75%);
   background-attachment: fixed;
 }
 
