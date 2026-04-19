@@ -64,8 +64,19 @@ function GroupsContent() {
 
   const refreshGroupData = async (groupId: number) => {
       try {
+          // Pulse 1: Tactical Member Sync
           const respMembers = await api.get(`/groups/${groupId}/members`);
           setGroupMembers(respMembers.data);
+
+          // Pulse 2: Combat Engagement Monitoring
+          // Automatically pull users into the arena if a match has started
+          if (!showArena) {
+              const respGame = await api.get(`/games/state/${groupId}`);
+              if (respGame.data && respGame.data.status === 'active') {
+                  setActiveGameId(respGame.data.game_id);
+                  setShowArena(true);
+              }
+          }
       } catch (err) {
           console.error("Polling error:", err);
       }
