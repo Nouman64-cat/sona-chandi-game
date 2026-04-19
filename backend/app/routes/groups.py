@@ -52,6 +52,10 @@ def refresh_beacon(id: int, session: Session = Depends(get_session), current_use
 def heartbeat(id: int, session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
     return GroupService.update_arena_presence(session, id, current_user.id)
 
+@router.post("/{id}/ready")
+def set_ready(id: int, is_ready: bool, session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+    return GroupService.set_member_ready(session, id, current_user.id, is_ready)
+
 @router.get("/{group_id}/members")
 def list_group_members(group_id: int, session: Session = Depends(get_session)):
     # Return members with their readiness and online status
