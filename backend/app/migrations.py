@@ -106,6 +106,13 @@ def add_game_turn_order(session: Session):
     session.exec(text("ALTER TABLE game ADD COLUMN IF NOT EXISTS turn_order VARCHAR DEFAULT NULL;"))
     session.commit()
 
+def add_card_icon_fields(session: Session):
+    """Evolution 010: Add icon column to cardtemplate and playercard."""
+    logger.info("Running Evolution 010: add_card_icon_fields")
+    session.exec(text("ALTER TABLE cardtemplate ADD COLUMN IF NOT EXISTS icon VARCHAR DEFAULT 'Shield';"))
+    session.exec(text("ALTER TABLE playercard ADD COLUMN IF NOT EXISTS icon VARCHAR DEFAULT 'Shield';"))
+    session.commit()
+
 # --- Migration Registry ---
 # Order matters: oldest to newest
 MIGRATIONS = [
@@ -118,6 +125,7 @@ MIGRATIONS = [
     {"name": "007_add_member_ready_field", "func": add_member_ready_field},
     {"name": "008_add_member_heartbeat_field", "func": add_member_heartbeat_field},
     {"name": "009_add_game_turn_order", "func": add_game_turn_order},
+    {"name": "010_add_card_icon_fields", "func": add_card_icon_fields},
 ]
 
 def run_migrations(session: Session):

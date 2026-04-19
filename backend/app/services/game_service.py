@@ -73,7 +73,7 @@ class GameService:
         
         # Fetch templates from DB
         templates = session.exec(select(CardTemplate).order_by(CardTemplate.card_type)).all()
-        template_map = {t.card_type: (t.name, t.value, t.color) for t in templates}
+        template_map = {t.card_type: (t.name, t.value, t.color, t.icon) for t in templates}
         
         # All available card types (A=Sona, B=Chandi, C=Moti, D=Heera, etc.)
         all_type_keys = sorted(template_map.keys())  # Use all types defined in DB
@@ -90,11 +90,11 @@ class GameService:
         cycle_index = 0
         while len(deck) < total_cards_needed:
             key = all_type_keys[cycle_index % len(all_type_keys)]
-            name, val, color = template_map[key]
+            name, val, color, icon = template_map[key]
             # Use the color from DB, defaulting to Gold (#FFD700) only if missing or invalid
             safe_color = color if (color and color.startswith('#')) else "#FFD700"
             for _ in range(4):
-                deck.append((name, val, safe_color))
+                deck.append((name, val, safe_color, icon))
             cycle_index += 1
         
         # SHUFFLE for fair distribution
@@ -104,8 +104,8 @@ class GameService:
         for member in active_members:
             for _ in range(4):
                 if not deck: break
-                c_name, c_val, c_color = deck.pop()
-                card = PlayerCard(game_id=game.id, user_id=member.id, card_type=c_name, value=c_val, color=c_color)
+                c_name, c_val, c_color, c_icon = deck.pop()
+                card = PlayerCard(game_id=game.id, user_id=member.id, card_type=c_name, value=c_val, color=c_color, icon=c_icon)
                 session.add(card)
 
         session.commit()

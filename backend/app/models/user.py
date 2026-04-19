@@ -101,6 +101,7 @@ class CardTemplate(SQLModel, table=True):
     name: str
     value: int
     color: str = Field(default="#FFD700")
+    icon: str = Field(default="Shield")
 
 class Game(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -122,6 +123,7 @@ class PlayerCard(SQLModel, table=True):
     # Visual preference/theme index 0-3
     theme_index: int = Field(default=0)
     color: str = Field(default="#FFD700")
+    icon: str = Field(default="Shield")
 
 class GameResult(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

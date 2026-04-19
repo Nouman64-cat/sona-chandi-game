@@ -2,9 +2,21 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, Trophy, Loader2, Sparkles, LogOut, Swords, Star, RefreshCw } from 'lucide-react';
+import { 
+  Shield, Users, Trophy, Loader2, Sparkles, LogOut, Swords, Star, RefreshCw,
+  Crown, Zap, Flame, Anchor, Target, Gem, Coins, CircleDollarSign, Award, Component
+} from 'lucide-react';
 import { useTheme } from '@/app/components/ThemeProvider';
 import Confetti from './Confetti';
+
+const IconRenderer = ({ name, size = 16, className = "" }: { name: string, size?: number, className?: string }) => {
+  const icons: Record<string, any> = {
+    Shield, Swords, Crown, Zap, Flame, Trophy, Target, Gem, Anchor, Sparkles,
+    Coins, CircleDollarSign, Award, Star, Component
+  };
+  const IconComponent = icons[name] || Shield;
+  return <IconComponent size={size} className={className} />;
+};
 
 interface GameArenaProps {
   groupId: number;
@@ -440,11 +452,11 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                               ? (iHaveFinished ? 'SPECTATING' : 'YOU')
                               : 'ALLY'}
                         </span>
-                        {iHaveFinished && Number(player.id) !== Number(currentUserId) && (
+                        {(iHaveFinished && Number(player.id) !== Number(currentUserId)) || (iHaveFinished && Number(player.id) === Number(currentUserId)) ? (
                             <span className="text-[9px] font-black uppercase tracking-widest text-purple-400 flex items-center gap-1 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
                                 👁 VISIBLE
                             </span>
-                        )}
+                        ) : null}
                         {player.isCurrentTurn && (
                             <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gold italic flex items-center gap-1 bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20">
                                 <Sparkles size={8} /> CURRENT TURN
@@ -481,7 +493,7 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                     const baseColor = isValidHex ? dbColor : '#FFD700';
                     
                     const textColorClass = 'text-white font-black';
-                    const allyIconColor = 'rgba(255, 255, 255, 0.4)';
+                    const allyIconColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.2)';
 
                     return (
                         <div key={card.id} className="relative">
@@ -508,11 +520,11 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                                     : {}),
                                   boxShadow: selectedCardId !== null && Number(selectedCardId) === Number(card.id)
                                       ? `0 0 40px ${baseColor}CC`
-                                      : isRevealed
+                                      : results.some((r: any) => Number(r.user_id) === Number(player.id)) ? `0 0 30px ${baseColor}` : isRevealed
                                       ? `0 0 15px ${baseColor}99`
-                                      : `0 0 8px rgba(255,255,255,0.06)`,
-                                  borderColor: isRevealed ? baseColor : 'rgba(255,255,255,0.08)',
-                                  backgroundColor: isRevealed ? baseColor : 'rgba(255,255,255,0.05)',
+                                      : theme === 'dark' ? `0 0 8px rgba(255,255,255,0.06)` : `0 0 8px rgba(0,0,0,0.06)`,
+                                  borderColor: isRevealed ? baseColor : (theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'),
+                                  backgroundColor: isRevealed ? baseColor : (theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
                                   // Spectator ally cards: slightly dimmed to distinguish from own cards
                                   opacity: !isMe && iHaveFinished ? 0.85 : 1,
                               }}
@@ -522,20 +534,27 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                             <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
                             
                             {isRevealed ? (
-                                <div className={`flex flex-col items-center justify-center gap-1 z-10 ${textColorClass}`}>
-                                    <div className="text-[9px] md:text-[11px] uppercase tracking-widest opacity-60 mb-1">
-                                        {cardType}
-                                    </div>
-                                    <div className="text-xl md:text-3xl tracking-tighter">
-                                        {card.value}
-                                    </div>
-                                    <div className="absolute bottom-1.5 right-1.5 md:bottom-2 md:right-2 opacity-20">
-                                        <Shield size={10} />
-                                    </div>
-                                </div>
+                                 <div className={`flex flex-col items-center justify-center gap-1 z-10 ${textColorClass} w-full h-full`}>
+                                     {/* Center Icon */}
+                                     <div className="mb-1 md:mb-2 transform scale-150 md:scale-[2] opacity-90">
+                                         <IconRenderer name={card.icon} size={16} />
+                                     </div>
+                                     
+                                     {/* Name below icon */}
+                                     <div className="text-[9px] md:text-[11px] uppercase tracking-[0.2em] font-black opacity-80">
+                                         {cardType}
+                                     </div>
+
+                                     {/* Amount in Bottom-Center */}
+                                     <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2">
+                                         <div className="text-[8px] md:text-xs tracking-widest font-black text-white uppercase">
+                                             {card.value}
+                                         </div>
+                                     </div>
+                                 </div>
                             ) : (
-                                <div className="flex h-full w-full items-center justify-center z-10">
-                                    <Shield size={16} className="md:w-8 md:h-8 animate-pulse" style={{ color: allyIconColor }} />
+                                <div className="flex h-full w-full items-center justify-center z-10 opacity-10">
+                                    <IconRenderer name="Shield" size={24} className="md:w-12 md:h-12 " style={{ color: allyIconColor }} />
                                 </div>
                             )}
                           </div>
@@ -597,9 +616,13 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
           <motion.div 
             initial={{ y: 100 }}
             animate={{ y: 0 }}
-            className="fixed bottom-6 md:bottom-12 left-1/2 z-[80] -translate-x-1/2 rounded-full bg-black/60 p-2 md:p-4 px-4 md:px-8 backdrop-blur-xl border border-white/10 shadow-2xl"
+            className={`fixed bottom-6 md:bottom-12 left-1/2 z-[80] -translate-x-1/2 rounded-full p-2 md:p-4 px-4 md:px-8 backdrop-blur-xl border shadow-2xl transition-colors duration-500 ${
+                theme === 'dark' 
+                ? 'bg-black/60 border-white/10 text-white' 
+                : 'bg-white/80 border-black/10 text-black'
+            }`}
           >
-              <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs font-black uppercase tracking-widest text-text-secondary">
+              <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs font-black uppercase tracking-widest">
                   {iHaveWon ? (
                       <>
                         <Trophy size={14} className="text-gold animate-bounce" />

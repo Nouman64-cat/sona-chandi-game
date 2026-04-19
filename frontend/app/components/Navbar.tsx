@@ -49,7 +49,7 @@ const Navbar = () => {
   return (
     <>
       {/* Desktop Sidebar / Top Nav */}
-      <nav className="fixed left-0 top-0 hidden h-full w-20 flex-col items-center border-r border-white/10 bg-nav-bg py-8 backdrop-blur-xl md:flex lg:w-64 lg:items-start lg:px-6">
+      <nav className="fixed left-0 top-0 z-50 hidden h-full w-20 flex-col items-center border-r border-white/10 bg-nav-bg py-8 backdrop-blur-xl md:flex lg:w-64 lg:items-start lg:px-6">
         <div className="mb-12 hidden lg:block">
           <h1 className="gold-text text-2xl font-bold tracking-tighter italic">SONA CHANDI</h1>
         </div>
