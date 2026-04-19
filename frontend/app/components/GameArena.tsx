@@ -500,8 +500,12 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                                       setSelectedCardId(prev => (prev !== null && Number(prev) === cid) ? null : cid);
                                   }
                               }}
-                              className={`relative aspect-[2/3] w-16 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl border-2 transition-all ${playingCard === card.id ? 'opacity-50 scale-95' : ''} ${selectedCardId !== null && Number(selectedCardId) === Number(card.id) ? 'ring-2 md:ring-4 ring-gold' : ''} ${isMe && isMyTurn ? 'cursor-pointer' : ''}`}
+                              className={`relative aspect-[2/3] w-16 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl border-2 transition-all ${playingCard === card.id ? 'opacity-50 scale-95' : ''} ${selectedCardId !== null && Number(selectedCardId) === Number(card.id) ? 'ring-2 md:ring-4' : ''} ${isMe && isMyTurn ? 'cursor-pointer' : ''}`}
                               style={{ 
+                                  // Selection ring uses the card's own DB color — not var(--gold)
+                                  ...(selectedCardId !== null && Number(selectedCardId) === Number(card.id)
+                                    ? { ['--tw-ring-color' as any]: baseColor }
+                                    : {}),
                                   boxShadow: selectedCardId !== null && Number(selectedCardId) === Number(card.id)
                                       ? `0 0 40px ${baseColor}CC`
                                       : isRevealed
