@@ -47,6 +47,7 @@ class GameService:
             raise HTTPException(status_code=400, detail="Squad must have at least 1 member to start.")
 
         # 5. Create Game — first turn assigned randomly for fairness
+        import random
         first_player = random.choice(active_members)
         game = Game(
             group_id=group_id, 
@@ -60,7 +61,6 @@ class GameService:
 
         # Create Cards dynamic deck based on player count (exactly 4 * players)
         from app.models.user import CardTemplate
-        import random
         deck = []
         
         # Fetch templates from DB
