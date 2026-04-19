@@ -145,6 +145,7 @@ class GameService:
             "game_id": game.id,
             "status": game.status,
             "created_at": game.created_at,
+            "turn_order": game.turn_order,
             "current_turn_user_id": game.current_turn_user_id,
             "group_creator_id": group_creator_id,
             "winner_id_1": game.winner_id_1, 

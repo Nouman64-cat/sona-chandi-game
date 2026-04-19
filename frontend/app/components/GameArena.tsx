@@ -244,11 +244,28 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
   });
 
   const findRecipient = () => {
-    const memberIds = groupMembers.map(m => Number(m.id)).sort((a,b) => a - b);
+    // Use the game's stored shuffled turn order (matches backend play_turn logic exactly)
+    const finishedIds = new Set((gameState.results || []).map((r: any) => Number(r.user_id)));
+
+    let memberIds: number[];
+    if (gameState.turn_order) {
+      memberIds = gameState.turn_order.split(',').map(Number);
+    } else {
+      // Fallback: alphabetical by id (legacy games)
+      memberIds = groupMembers.map((m: any) => Number(m.id)).sort((a: number, b: number) => a - b);
+    }
+
     const currentIdx = memberIds.indexOf(Number(currentUserId));
-    const nextIdx = (currentIdx + 1) % memberIds.length;
+    if (currentIdx === -1) return "Ally";
+
+    // Walk forward in the shuffled order, skipping finished players
+    let nextIdx = (currentIdx + 1) % memberIds.length;
+    while (finishedIds.has(memberIds[nextIdx]) && nextIdx !== currentIdx) {
+      nextIdx = (nextIdx + 1) % memberIds.length;
+    }
+
     const targetId = memberIds[nextIdx];
-    return groupMembers.find(m => Number(m.id) === Number(targetId))?.full_name || "Ally";
+    return groupMembers.find((m: any) => Number(m.id) === targetId)?.full_name || "Ally";
   };
 
   const results = gameState.results || [];
