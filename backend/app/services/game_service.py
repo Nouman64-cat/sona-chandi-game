@@ -48,21 +48,24 @@ class GameService:
 
         # 5. Create Game — shuffle turn order and first player for full randomness
         import random
-        shuffled_members = active_members[:]
-        random.shuffle(shuffled_members)
-        turn_order_str = ",".join(str(m.id) for m in shuffled_members)
-        first_player = shuffled_members[0]
+        # Extract plain Python list of user IDs (SQLAlchemy result proxies
+        # don't shuffle reliably with random.shuffle)
+        member_ids = [m.id for m in active_members]
+        random.shuffle(member_ids)
+        turn_order_str = ",".join(str(uid) for uid in member_ids)
+        first_player_id = member_ids[0]
 
         game = Game(
             group_id=group_id, 
             status="active", 
-            current_turn_user_id=first_player.id,
+            current_turn_user_id=first_player_id,
             turn_order=turn_order_str,
             created_at=int(time.time())
         )
         session.add(game)
         session.commit()
         session.refresh(game)
+
 
         # Create Cards dynamic deck based on player count (exactly 4 * players)
         from app.models.user import CardTemplate
