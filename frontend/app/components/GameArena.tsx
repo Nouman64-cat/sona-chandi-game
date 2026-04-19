@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, Trophy, Loader2, Sparkles, LogOut, Swords, Star } from 'lucide-react';
+import { Shield, Users, Trophy, Loader2, Sparkles, LogOut, Swords, Star, RefreshCw } from 'lucide-react';
 import { useTheme } from '@/app/components/ThemeProvider';
 import Confetti from './Confetti';
 
@@ -30,20 +30,57 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
   const initializedRef = useRef(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [newWinner, setNewWinner] = useState<any>(null);
+  const [isInactive, setIsInactive] = useState(false);
+  const lastActivityRef = useRef(Date.now());
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 Minutes
+
+  // Activity Sensor Protocol
+  useEffect(() => {
+    const handleActivity = () => {
+      lastActivityRef.current = Date.now();
+      if (isInactive) {
+          setIsInactive(false);
+          fetchGameState(); // Immediate tactical re-sync on wake
+      }
+    };
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('mousedown', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('mousedown', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+    };
+  }, [isInactive]);
 
   useEffect(() => {
     fetchGameState();
-    const interval = setInterval(fetchGameState, 2000);
+    
+    const interval = setInterval(() => {
+        if (Date.now() - lastActivityRef.current > INACTIVITY_TIMEOUT) {
+            if (!isInactive) setIsInactive(true);
+            return;
+        }
+        fetchGameState();
+    }, 2000);
     
     // Arena Heartbeat Loop (Aggressive Sync)
-    const hbInterval = setInterval(sendHeartbeat, 3000);
+    const hbInterval = setInterval(() => {
+        if (Date.now() - lastActivityRef.current > INACTIVITY_TIMEOUT) return;
+        sendHeartbeat();
+    }, 3000);
+    
     sendHeartbeat(); // Initial pulse
     
     return () => {
         clearInterval(interval);
         clearInterval(hbInterval);
     };
-  }, [groupId]);
+  }, [groupId, isInactive]);
 
   const sendHeartbeat = async () => {
       try {
@@ -493,6 +530,38 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
           <span className="hidden md:inline">TURN:{gameState.current_turn_user_id}</span>
           <span className="hidden md:inline">SELF:{currentUserId}</span>
       </div>
+
+      <AnimatePresence>
+        {isInactive && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-2xl p-8 text-center"
+          >
+            <div className="relative mb-8">
+              <div className="absolute inset-0 animate-pulse rounded-full bg-gold/20 blur-3xl" />
+              <Shield className="relative mx-auto text-gold" size={80} />
+            </div>
+            <h2 className="text-3xl font-black italic tracking-tighter uppercase mb-2 text-white">Tactical Standby</h2>
+            <p className="max-w-sm text-text-secondary uppercase tracking-[0.2em] font-bold text-[10px] mb-10 leading-loose">
+              Sync suspended to preserve power and server resources. All tactical sensors are in standby.
+            </p>
+            <button 
+              onClick={() => {
+                  lastActivityRef.current = Date.now();
+                  setIsInactive(false);
+                  fetchGameState();
+                  sendHeartbeat();
+              }}
+              className="group flex items-center gap-3 rounded-full bg-gold px-10 py-4 text-[11px] font-black text-black transition-all hover:scale-110 active:scale-95 shadow-[0_0_50px_rgba(255,215,0,0.3)] border-b-4 border-black/20"
+            >
+              <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
+              RE-ENGAGE ARENA
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
