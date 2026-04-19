@@ -66,22 +66,32 @@ class GameService:
         templates = session.exec(select(CardTemplate).order_by(CardTemplate.card_type)).all()
         template_map = {t.card_type: (t.name, t.value, t.color) for t in templates}
         
-        # Use only as many types as there are players
-        # A, B, C, D maps to the order in card_types
-        type_keys = ["A", "B", "C", "D"]
-        active_type_keys = type_keys[:len(active_members)]
+        # All available card types (A=Sona, B=Chandi, C=Moti, D=Heera, etc.)
+        all_type_keys = sorted(template_map.keys())  # Use all types defined in DB
         
-        # 4 of each active type = total (4 * players)
-        for key in active_type_keys:
-            name, val, color = template_map.get(key, (key, 100, "#FFD700")) # Fallback
+        if not all_type_keys:
+            # Emergency fallback if no templates exist in DB
+            raise Exception("No card templates found. Ask admin to set up card types first.")
+        
+        # We need exactly 4 cards per player = total_cards
+        total_cards_needed = len(active_members) * 4
+        
+        # Build deck by cycling through card types until we have enough cards
+        # Each cycle adds 4 cards of a type (one "set")
+        cycle_index = 0
+        while len(deck) < total_cards_needed:
+            key = all_type_keys[cycle_index % len(all_type_keys)]
+            name, val, color = template_map[key]
+            # Ensure color is always a valid hex color 
+            safe_color = color if (color and color.startswith('#') and len(color) >= 4) else "#FFD700"
             for _ in range(4):
-                deck.append((name, val, color))
+                deck.append((name, val, safe_color))
+            cycle_index += 1
         
-        # SHUFFLE
+        # SHUFFLE for fair distribution
         random.shuffle(deck)
         
-        # DISTRIBUTE
-        # Give exactly 4 cards to every participant
+        # DISTRIBUTE — Give exactly 4 cards to every participant
         for member in active_members:
             for _ in range(4):
                 if not deck: break
@@ -91,6 +101,7 @@ class GameService:
 
         session.commit()
         return game
+
 
     @staticmethod
     def get_game_state(session: Session, group_id: int):
