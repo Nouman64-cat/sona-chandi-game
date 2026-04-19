@@ -39,6 +39,7 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
   const [playingCard, setPlayingCard] = useState<number | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const lastResultsCountRef = useRef(0);
+  const lastGameIdRef = useRef<number | null>(null);
   const initializedRef = useRef(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [newWinner, setNewWinner] = useState<any>(null);
@@ -116,6 +117,13 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
       const newState = response.data;
       
       const newResults = newState.results || [];
+      const gameId = newState.game_id;
+
+      // Handle Round Transition: Reset counters if the game ID has changed
+      if (gameId && lastGameIdRef.current !== null && gameId !== lastGameIdRef.current) {
+        lastResultsCountRef.current = 0;
+      }
+      lastGameIdRef.current = gameId;
       
       if (!initializedRef.current) {
         lastResultsCountRef.current = newResults.length;
@@ -138,7 +146,6 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
 
       // --- First Legend Roulette ---
       // Trigger only for fresh games (created within 20s) that we haven't shown yet
-      const gameId = newState.game_id;
       const createdAt = newState.created_at;
       const now = Math.floor(Date.now() / 1000);
       const isFreshGame = createdAt && (now - createdAt) < 20;
@@ -219,6 +226,31 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
     } catch (err: any) {
        alert(err.response?.data?.detail || "Termination failed.");
        console.error(err);
+    }
+  };
+
+  const handleNextRound = async () => {
+    if (!window.confirm("Are you sure you want to advance to the next round?")) return;
+    try {
+      const { default: api } = await import('@/app/services/apiService');
+      await api.post(`/games/start/${groupId}?requestor_id=${currentUserId}&action=next_round`);
+      await fetchGameState();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to start next round.");
+      console.error(err);
+    }
+  };
+
+  const [markingReady, setMarkingReady] = useState(false);
+  const handleReadyForNextRound = async () => {
+    setMarkingReady(true);
+    try {
+      const { default: api } = await import('@/app/services/apiService');
+      await api.post(`/groups/${groupId}/ready?is_ready=true`);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to mark ready.");
+    } finally {
+      setMarkingReady(false);
     }
   };
 
@@ -349,21 +381,128 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                                       <div className="text-[10px] text-text-secondary font-bold uppercase tracking-widest">@{member?.username || "unknown"}</div>
                                   </div>
                               </div>
-                              <div className="text-right">
+                               <div className="text-right">
                                   <div className="text-sm font-black text-text-secondary uppercase tracking-widest mb-0.5">Scored</div>
-                                  <div className={`text-xl md:text-2xl font-black ${isChampion ? 'text-gold' : 'text-white'}`}>{res.points} <span className="text-xs opacity-50">PTS</span></div>
+                                  <div className={`text-xl md:text-2xl font-black flex flex-col items-end ${isChampion ? 'text-gold' : 'text-white'}`}>
+                                      <div>{res.points} <span className="text-xs opacity-50">PTS</span></div>
+                                      {gameState.series_results && gameState.series_results[res.user_id] && (
+                                          <div className="text-[10px] font-bold text-gold uppercase tracking-tighter mt-1 bg-gold/10 px-2 py-0.5 rounded-md border border-gold/20">
+                                              Total: {gameState.series_results[res.user_id].points} PTS
+                                          </div>
+                                      )}
+                                  </div>
                               </div>
                           </motion.div>
                       );
                   })}
               </div>
 
-              <button 
-                onClick={onClose}
-                className="w-full md:w-auto rounded-2xl bg-gold px-12 py-4 text-xl font-black text-black transition-all hover:scale-[1.05] shadow-2xl shadow-gold/20"
-              >
-                RETURN TO HQ
-              </button>
+              {Number(currentUserId) === Number(gameState?.group_creator_id) && (
+                  <div className="w-full max-w-xl mx-auto mb-8 px-4 flex flex-col items-center">
+                      <div className="flex w-full items-center justify-between mb-3 border-b border-white/10 pb-2">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary">Squad Deployment Commalink</span>
+                          <span className="text-xs font-black text-white px-2 py-1 bg-white/5 rounded-md border border-white/10">{groupMembers.filter((m: any) => m.is_ready).length} / {groupMembers.length} ACTIVE</span>
+                      </div>
+                      <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {groupMembers.map((member: any) => (
+                              <div key={member.id} className={`flex flex-col items-center justify-center rounded-xl p-3 border ${member.is_ready ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/5 border-red-500/20'} transition-all`}>
+                                  <span className="text-xs font-black text-white truncate w-full text-center mb-1">{member.username || member.full_name.split(' ')[0]}</span>
+                                  <div className="flex items-center gap-1.5">
+                                      <div className={`h-1.5 w-1.5 rounded-full ${member.is_ready ? 'bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`} />
+                                      <span className={`text-[9px] font-black uppercase tracking-tight ${member.is_ready ? 'text-green-500' : 'text-red-500/70'}`}>
+                                          {member.is_ready ? 'READY' : 'MIA'}
+                                      </span>
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              )}
+
+              {gameState?.round_history && gameState.round_history.length > 0 && (
+                  <div className="w-full max-w-4xl mx-auto mb-8 px-4 flex flex-col items-center">
+                    <div className="flex w-full items-center justify-between mb-3 border-b border-white/10 pb-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary">Series Combat Log</span>
+                    </div>
+                    <div className="w-full overflow-x-auto rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-black/40 text-[10px] uppercase font-black tracking-widest text-text-secondary">
+                                <tr>
+                                    <th className="p-3 md:p-4 px-4 md:px-6 font-bold text-white uppercase tracking-widest">Legend</th>
+                                    {gameState.round_history.map((r: any) => (
+                                        <th key={r.round} className="p-3 md:p-4 text-center">R{r.round}</th>
+                                    ))}
+                                    <th className="p-3 md:p-4 px-4 md:px-6 text-right font-bold text-gold">Total Pts</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {(() => {
+                                    // Sort by total points to make the datatable mimic a true leaderboard
+                                    const sortedMembers = [...groupMembers].sort((a: any, b: any) => {
+                                        const ptsA = gameState.series_results?.[a.id]?.points || 0;
+                                        const ptsB = gameState.series_results?.[b.id]?.points || 0;
+                                        return ptsB - ptsA;
+                                    });
+                                    
+                                    return sortedMembers.map((member: any) => {
+                                        const totalPts = gameState.series_results?.[member.id]?.points || 0;
+                                        return (
+                                            <tr key={member.id} className="hover:bg-white/5 transition-colors">
+                                                <td className="p-3 md:p-4 px-4 md:px-6 font-bold text-white text-xs md:text-sm">
+                                                    {member.username || member.full_name.split(' ')[0]}
+                                                </td>
+                                                {gameState.round_history.map((r: any) => {
+                                                    const perf = r.results.find((cr: any) => Number(cr.user_id) === Number(member.id));
+                                                    const isFirst = perf?.position === 1;
+                                                    return (
+                                                        <td key={r.round} className={`p-3 md:p-4 text-center font-bold text-xs md:text-sm ${isFirst ? 'text-gold drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]' : 'text-text-secondary'}`}>
+                                                            {perf ? perf.points : '—'}
+                                                        </td>
+                                                    );
+                                                })}
+                                                <td className="p-3 md:p-4 px-4 md:px-6 text-right font-black text-gold text-xs md:text-sm">
+                                                    {totalPts}
+                                                </td>
+                                            </tr>
+                                        );
+                                    });
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
+                  </div>
+              )}
+
+              <div className="flex flex-col md:flex-row items-center justify-center gap-4 w-full px-4">
+                 {Number(currentUserId) === Number(gameState?.group_creator_id) ? (
+                     <button 
+                       onClick={handleNextRound}
+                       className="w-full md:w-auto rounded-2xl border-2 border-gold text-gold px-8 py-3 md:py-4 text-sm md:text-base font-black uppercase tracking-widest transition-all hover:bg-gold/10"
+                     >
+                       START NEXT ROUND
+                     </button>
+                 ) : (
+                     <button 
+                       onClick={handleReadyForNextRound}
+                       disabled={groupMembers.find((m: any) => Number(m.id) === Number(currentUserId))?.is_ready || markingReady}
+                       className={`w-full md:w-auto rounded-2xl border-2 px-8 py-3 md:py-4 text-sm md:text-base font-black uppercase tracking-widest transition-all ${
+                          groupMembers.find((m: any) => Number(m.id) === Number(currentUserId))?.is_ready 
+                          ? 'border-green-500 bg-green-500/10 text-green-500'
+                          : 'border-gold text-gold hover:bg-gold/10'
+                       }`}
+                     >
+                       {groupMembers.find((m: any) => Number(m.id) === Number(currentUserId))?.is_ready 
+                          ? 'READY FOR BATTLE' 
+                          : 'JOIN NEXT ROUND'}
+                     </button>
+                 )}
+                 <button 
+                   onClick={onClose}
+                   className="w-full md:w-auto rounded-2xl bg-gold px-12 py-3 md:py-4 text-sm md:text-base font-black text-black uppercase tracking-widest transition-all hover:scale-[1.05] shadow-2xl shadow-gold/20"
+                 >
+                   RETURN TO HQ
+                 </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -375,15 +514,36 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
             <Trophy size={20} className="md:w-6 md:h-6" />
           </div>
           <div>
-            <h1 className="text-xl md:text-3xl font-black italic tracking-tighter uppercase">
-              {gameState.status === 'finished' ? 'Match Finalized' : 'ARENA ACTIVE'}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl md:text-3xl font-black italic tracking-tighter uppercase">
+                {gameState.status === 'finished' ? 'Match Finalized' : 'ARENA ACTIVE'}
+              </h1>
+              {gameState.round_number && (
+                  <div className="text-[10px] md:text-xs font-black bg-gold text-black px-2 py-0.5 rounded-md self-center mt-1">ROUND {gameState.round_number}</div>
+              )}
+            </div>
             <p className="text-[10px] text-text-secondary uppercase tracking-[0.2em] font-bold">
                {gameState.status === 'finished' ? 'Victory Claimed' : 'Live Battle Progression'}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
+
+        <div className="flex items-center gap-3 md:gap-4">
+          {(() => {
+              const me = playerGroups.find(p => Number(p.id) === Number(currentUserId));
+              if (!me) return null;
+              return (
+                  <div className="flex items-center gap-3 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md mr-2 md:mr-4">
+                      <div className={`flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-br ${me.theme.from} ${me.theme.to} text-black text-[10px] md:text-xs font-black uppercase shadow-lg`}>
+                          {me.username?.[0] || 'U'}
+                      </div>
+                      <div className="hidden sm:flex flex-col">
+                          <span className="text-[10px] font-black text-white leading-none">{me.full_name}</span>
+                      </div>
+                  </div>
+              );
+          })()}
+          
           {Number(currentUserId) === Number(gameState?.group_creator_id) && (
               <button 
                 onClick={handleEndMatch}

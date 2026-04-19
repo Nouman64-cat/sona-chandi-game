@@ -111,6 +111,7 @@ class Game(SQLModel, table=True):
     turn_order: Optional[str] = Field(default=None)  # comma-separated user IDs, shuffled at game start
     winner_id_1: Optional[int] = Field(default=None, foreign_key="user.id")
     winner_id_2: Optional[int] = Field(default=None, foreign_key="user.id")
+    series_id: Optional[str] = Field(default=None) # tracks match rounds
     created_at: Optional[int] = Field(default=None) # Timestamp
 
 class PlayerCard(SQLModel, table=True):

@@ -6,7 +6,7 @@ from app.models.user import User, Group, GroupMember, Game, PlayerCard
 
 class GameService:
     @staticmethod
-    def initialize_game(session: Session, group_id: int, requestor_id: int):
+    def initialize_game(session: Session, group_id: int, requestor_id: int, action: str = "new_match"):
         # Verify group exists
         group = session.get(Group, group_id)
         if not group:
@@ -20,10 +20,18 @@ class GameService:
 
 
         # 2. Check for Strategic Readiness (Full Squad Engagement)
-        # Fetch all memberships to verify readiness
         members_stmt = select(GroupMember).where(GroupMember.group_id == group_id)
         all_memberships = session.exec(members_stmt).all()
         
+        # The Squad Leader is always implicitly ready — mark them and flush to DB
+        for m in all_memberships:
+            if m.user_id == requestor_id:
+                m.is_ready = True
+                session.add(m)
+        session.flush()  # Write to DB so the count query sees fresh state
+        
+        # Re-fetch memberships so we read the just-flushed admin readiness
+        all_memberships = session.exec(members_stmt).all()
         not_ready_count = sum(1 for m in all_memberships if not m.is_ready)
         if not_ready_count > 0:
             raise HTTPException(
@@ -55,11 +63,21 @@ class GameService:
         turn_order_str = ",".join(str(uid) for uid in member_ids)
         first_player_id = member_ids[0]
 
+        import uuid
+        series_id = uuid.uuid4().hex
+
+        if action == "next_round":
+            stmt_last = select(Game).where(Game.group_id == group_id).order_by(Game.created_at.desc())
+            last_game = session.exec(stmt_last).first()
+            if last_game and last_game.series_id:
+                series_id = last_game.series_id
+
         game = Game(
             group_id=group_id, 
             status="active", 
             current_turn_user_id=first_player_id,
             turn_order=turn_order_str,
+            series_id=series_id,
             created_at=int(time.time())
         )
         session.add(game)
@@ -144,6 +162,54 @@ class GameService:
         group = session.get(Group, game.group_id)
         group_creator_id = group.creator_id if group else None
         
+        # Get series cumulative results and round history
+        series_results = {}
+        round_history = []
+        round_number = 1
+        
+        if game.series_id:
+            # Find all games in this series, ordered chronologically
+            series_games_stmt = select(Game).where(Game.series_id == game.series_id).order_by(Game.created_at.asc())
+            series_games = session.exec(series_games_stmt).all()
+            
+            game_to_round_map = {}
+            for idx, sg in enumerate(series_games):
+                round_val = idx + 1
+                game_to_round_map[sg.id] = round_val
+                if sg.id == game.id:
+                    round_number = round_val
+                    
+            from app.models.user import GameResult
+            series_stmt = select(GameResult).join(Game).where(Game.series_id == game.series_id)
+            all_series_results = session.exec(series_stmt).all()
+            
+            round_data_map = {} # Group results by game_id
+            
+            for r in all_series_results:
+                uid_str = str(r.user_id)
+                if uid_str not in series_results:
+                    series_results[uid_str] = {"points": 0, "wins": 0, "rounds_played": 0}
+                series_results[uid_str]["points"] += r.points
+                series_results[uid_str]["rounds_played"] += 1
+                if r.position == 1:
+                    series_results[uid_str]["wins"] += 1
+                    
+                if r.game_id not in round_data_map:
+                    round_data_map[r.game_id] = []
+                round_data_map[r.game_id].append({
+                    "user_id": r.user_id, 
+                    "points": r.points, 
+                    "position": r.position
+                })
+                
+            # Build the ordered round history
+            for sg in series_games:
+                if sg.id in round_data_map:
+                    round_history.append({
+                        "round": game_to_round_map[sg.id],
+                        "results": round_data_map[sg.id]
+                    })
+        
         return {
             "game_id": game.id,
             "status": game.status,
@@ -154,6 +220,9 @@ class GameService:
             "winner_id_1": game.winner_id_1, 
             "winner_id_2": game.winner_id_2,
             "results": [r.model_dump() for r in results],
+            "series_results": series_results,
+            "round_number": round_number,
+            "round_history": round_history,
             "cards": [card.model_dump() for card in cards],
             "player_presence": player_presence
         }

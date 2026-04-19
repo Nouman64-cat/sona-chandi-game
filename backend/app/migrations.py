@@ -113,6 +113,12 @@ def add_card_icon_fields(session: Session):
     session.exec(text("ALTER TABLE playercard ADD COLUMN IF NOT EXISTS icon VARCHAR DEFAULT 'Shield';"))
     session.commit()
 
+def add_game_series_id(session: Session):
+    """Evolution 011: Add series_id to game table for tracking multi-round matches."""
+    logger.info("Running Evolution 011: add_game_series_id")
+    session.exec(text("ALTER TABLE game ADD COLUMN IF NOT EXISTS series_id VARCHAR DEFAULT NULL;"))
+    session.commit()
+
 # --- Migration Registry ---
 # Order matters: oldest to newest
 MIGRATIONS = [
@@ -126,6 +132,7 @@ MIGRATIONS = [
     {"name": "008_add_member_heartbeat_field", "func": add_member_heartbeat_field},
     {"name": "009_add_game_turn_order", "func": add_game_turn_order},
     {"name": "010_add_card_icon_fields", "func": add_card_icon_fields},
+    {"name": "011_add_game_series_id", "func": add_game_series_id},
 ]
 
 def run_migrations(session: Session):

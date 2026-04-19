@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/app/components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,6 +21,7 @@ function GroupsContent() {
   const [showArena, setShowArena] = useState(false);
   const [activeGameId, setActiveGameId] = useState<number | null>(null);
   const [startingGame, setStartingGame] = useState(false);
+  const ignoredGameIdRef = useRef<number | null>(null);
 
   
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
@@ -64,17 +65,18 @@ function GroupsContent() {
 
   const refreshGroupData = async (groupId: number) => {
       try {
-          // Pulse 1: Tactical Member Sync
-          const respMembers = await api.get(`/groups/${groupId}/members`);
+          // Pulse 1: Tactical Member Sync with strict cache-busting
+          const ts = new Date().getTime();
+          const respMembers = await api.get(`/groups/${groupId}/members?t=${ts}`);
           setGroupMembers(respMembers.data);
 
           // Pulse 2: Combat Engagement Monitoring
-          const respGame = await api.get(`/games/state/${groupId}`);
+          const respGame = await api.get(`/games/state/${groupId}?t=${ts}`);
           const gameStatus = respGame.data?.status;
 
           if (gameStatus === 'active') {
               // Match is live — auto-pull users into arena
-              if (!showArena) {
+              if (respGame.data.game_id !== ignoredGameIdRef.current) {
                   setActiveGameId(respGame.data.game_id);
                   setShowArena(true);
               }
@@ -252,7 +254,10 @@ function GroupsContent() {
           groupId={selectedGroup.id} 
           currentUserId={currentUserId!} 
           groupMembers={groupMembers} 
-          onClose={() => setShowArena(false)}
+          onClose={() => {
+              ignoredGameIdRef.current = activeGameId;
+              setShowArena(false);
+          }}
         />
       )}
       
