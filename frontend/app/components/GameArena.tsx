@@ -9,13 +9,13 @@ import {
 import { useTheme } from '@/app/components/ThemeProvider';
 import Confetti from './Confetti';
 
-const IconRenderer = ({ name, size = 16, className = "" }: { name: string, size?: number, className?: string }) => {
+const IconRenderer = ({ name, size = 16, className = "", style = {} }: { name: string, size?: number, className?: string, style?: any }) => {
   const icons: Record<string, any> = {
     Shield, Swords, Crown, Zap, Flame, Trophy, Target, Gem, Anchor, Sparkles,
     Coins, CircleDollarSign, Award, Star, Component
   };
   const IconComponent = icons[name] || Shield;
-  return <IconComponent size={size} className={className} />;
+  return <IconComponent size={size} className={className} style={style} />;
 };
 
 interface GameArenaProps {
