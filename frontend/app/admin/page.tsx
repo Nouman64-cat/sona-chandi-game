@@ -215,20 +215,52 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <button 
-                    onClick={() => handleUpdate(card)}
-                    disabled={saving === card.id}
-                    className="flex items-center justify-center gap-3 rounded-2xl bg-gold px-8 py-4 font-black text-black shadow-lg shadow-gold/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
-                >
-                    {saving === card.id ? (
-                        <Loader2 className="animate-spin" size={20} />
-                    ) : (
-                        <>
-                            <Save size={20} />
-                            UPDATE CARD
-                        </>
-                    )}
-                </button>
+                <div className="flex items-center gap-6">
+                    {/* Live Preview Section */}
+                    <div className="hidden lg:flex flex-col items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary opacity-50 italic">Arena Field View</span>
+                        <div 
+                            className="relative aspect-[2/3] w-20 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl border-2 transition-all duration-500"
+                            style={{ 
+                                boxShadow: `0 0 20px ${card.color}99`,
+                                borderColor: card.color,
+                                backgroundColor: card.color,
+                            }}
+                        >
+                          <div className="h-full w-full rounded-[0.55rem] md:rounded-[0.9rem] flex flex-col items-center justify-center relative overflow-hidden">
+                            {/* Premium Shimmer Overlay - Identical to Arena */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
+                            
+                            <div className="flex flex-col items-center justify-center gap-1 z-10 text-white font-black">
+                                <div className="text-[9px] md:text-[11px] uppercase tracking-widest opacity-60 mb-1">
+                                    {card.name}
+                                </div>
+                                <div className="text-xl md:text-3xl tracking-tighter leading-none">
+                                    {card.value}
+                                </div>
+                                <div className="absolute bottom-1.5 right-1.5 md:bottom-2 md:right-2 opacity-20">
+                                    <Shield size={10} />
+                                </div>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={() => handleUpdate(card)}
+                        disabled={saving === card.id}
+                        className="flex-shrink-0 flex items-center justify-center gap-3 rounded-2xl bg-gold px-8 py-4 font-black text-black shadow-lg shadow-gold/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                    >
+                        {saving === card.id ? (
+                            <Loader2 className="animate-spin" size={20} />
+                        ) : (
+                            <>
+                                <Save size={20} />
+                                <span>UPDATE CARD</span>
+                            </>
+                        )}
+                    </button>
+                </div>
               </motion.div>
             ))}
 
