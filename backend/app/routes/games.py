@@ -38,6 +38,9 @@ def end_game(game_id: int, requestor_id: int, session: Session = Depends(get_ses
         
     game.status = "finished"
     session.add(game)
+    # Reset all members' readiness so lobby is clean for the next round
+    GameService.reset_group_readiness(session, game.group_id)
     session.commit()
     return {"status": "success"}
+
 

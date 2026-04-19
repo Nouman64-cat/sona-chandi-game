@@ -261,6 +261,21 @@ class GameService:
             game.current_turn_user_id = next_user_id
 
         session.add(game)
+        
+        # If game just finished, reset all members' readiness for the next match
+        if game.status == "finished":
+            GameService.reset_group_readiness(session, game.group_id)
+        
         session.commit()
         session.refresh(game)
         return game
+
+    @staticmethod
+    def reset_group_readiness(session: Session, group_id: int):
+        """Reset all members' is_ready to False after a match ends."""
+        members_stmt = select(GroupMember).where(GroupMember.group_id == group_id)
+        memberships = session.exec(members_stmt).all()
+        for m in memberships:
+            m.is_ready = False
+            session.add(m)
+        # Note: caller is responsible for commit

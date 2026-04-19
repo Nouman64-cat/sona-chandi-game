@@ -69,13 +69,18 @@ function GroupsContent() {
           setGroupMembers(respMembers.data);
 
           // Pulse 2: Combat Engagement Monitoring
-          // Automatically pull users into the arena if a match has started
-          if (!showArena) {
-              const respGame = await api.get(`/games/state/${groupId}`);
-              if (respGame.data && respGame.data.status === 'active') {
+          const respGame = await api.get(`/games/state/${groupId}`);
+          const gameStatus = respGame.data?.status;
+
+          if (gameStatus === 'active') {
+              // Match is live — auto-pull users into arena
+              if (!showArena) {
                   setActiveGameId(respGame.data.game_id);
                   setShowArena(true);
               }
+          } else {
+              // Match ended or no match — reset lobby to pre-match state
+              setActiveGameId(null);
           }
       } catch (err) {
           console.error("Polling error:", err);
@@ -182,9 +187,11 @@ function GroupsContent() {
       setGroupMembers(respMembers.data);
       
       const respGame = await api.get(`/games/state/${group.id}`);
+      // Only show 'Enter Arena' if there is a currently ACTIVE match
       if (respGame.data && respGame.data.status === 'active') {
           setActiveGameId(respGame.data.game_id);
       }
+      // Finished / inactive matches → activeGameId stays null → lobby resets
     } catch (err) {
       console.error(err);
     }
