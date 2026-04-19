@@ -2,8 +2,20 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session
 from app.database.connection import get_session
 from app.services.game_service import GameService
+from app.services.history_service import HistoryService
+from app.routes.auth import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/games", tags=["Games"])
+
+@router.get("/history/user")
+def get_match_history(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Retrieve the full match history for the currently authenticated user."""
+    return HistoryService.get_match_history(session, current_user.id)
+
 
 @router.post("/start/{group_id}")
 def start_game(group_id: int, requestor_id: int, action: str = "new_match", session: Session = Depends(get_session)):

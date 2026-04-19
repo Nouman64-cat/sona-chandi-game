@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Search, Users, Shield, LogOut, Sun, Moon, Swords, Settings } from 'lucide-react';
+import { Home, Search, Users, Shield, LogOut, Sun, Moon, Swords, Settings, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/app/components/ThemeProvider';
 
@@ -23,6 +23,7 @@ const Navbar = () => {
     { label: 'Friends', icon: Users, path: '/friends' },
     { label: 'Groups', icon: Shield, path: '/groups' },
     { label: 'Arena', icon: Swords, path: '/game' },
+    { label: 'History', icon: BookOpen, path: '/history' },
   ];
 
   const [userInfo, setUserInfo] = React.useState<{name: string, username: string, isAdmin: boolean} | null>(null);
