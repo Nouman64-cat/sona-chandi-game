@@ -390,31 +390,21 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                 </AnimatePresence>
 
                 {player.cards.map((card: any) => {
-                    // Normalize card type name
                     const cardType = (card.card_type || '').toUpperCase();
-
-                    // Canonical color map by card type name (set by admin via CardTemplate)
-                    // This ensures the correct color is always displayed even if DB value is wrong
-                    const CARD_COLOR_MAP: Record<string, string> = {
-                        'SONA': 'var(--gold)',
-                        'CHANDI': '#C0C0C0',
-                        'MOTI': '#EC4899',
-                        'HEERA': '#3B82F6',
-                    };
-
                     const isMe = Number(player.id) === Number(currentUserId);
                     
-                    // Resolve color: canonical map first, then DB value, then gold fallback
-                    const canonicalColor = CARD_COLOR_MAP[cardType];
+                    // Use ONLY the admin-configured color from the DB.
+                    // Literal hex fallback #FFD700 (gold) — NO CSS variables so gender theme
+                    // has zero influence on card appearance.
                     const dbColor = card.color;
-                    const isValidDbColor = dbColor && dbColor.startsWith('#') && dbColor.length >= 4 && dbColor.toLowerCase() !== '#ffffff' && dbColor.toLowerCase() !== '#fff';
-                    const baseColor = canonicalColor || (isValidDbColor ? dbColor : 'var(--gold)');
+                    const isValidHex = dbColor && /^#([0-9A-Fa-f]{3,6})$/.test(dbColor) && dbColor.toLowerCase() !== '#ffffff' && dbColor.toLowerCase() !== '#fff';
+                    const baseColor = isValidHex ? dbColor : '#FFD700';
                     
-                    // Determine text color strictly based on the global theme
-                    const textColorClass = theme === 'light' ? 'text-slate-950 font-black' : 'text-white font-black';
+                    // Text contrast: dark text on light cards, white on dark cards
+                    const textColorClass = 'text-white font-black';
                     
-                    // Contrast color for ally cards (not filled)
-                    const allyIconColor = theme === 'light' ? 'rgba(15, 23, 42, 0.4)' : 'rgba(255, 255, 255, 0.4)';
+                    // Ally card icon opacity
+                    const allyIconColor = 'rgba(255, 255, 255, 0.4)';
 
                     return (
                         <div key={card.id} className="relative">
@@ -435,8 +425,11 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                               }}
                               className={`relative aspect-[2/3] w-16 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl border-2 transition-all ${playingCard === card.id ? 'opacity-50 scale-95' : ''} ${selectedCardId !== null && Number(selectedCardId) === Number(card.id) ? 'ring-2 md:ring-4 ring-gold' : ''} ${isMe && isMyTurn ? 'cursor-pointer' : ''}`}
                               style={{ 
-                                  boxShadow: selectedCardId !== null && Number(selectedCardId) === Number(card.id) ? `0 0 40px var(--gold)CC` : `0 0 15px ${isMe ? baseColor : (player.theme?.glow || 'var(--gender-glow)')}`,
-                                  borderColor: isMe ? baseColor : 'var(--card-border)',
+                                  // All colors from admin DB — no CSS vars, no gender theme bleed
+                                  boxShadow: selectedCardId !== null && Number(selectedCardId) === Number(card.id)
+                                      ? `0 0 40px ${baseColor}CC`
+                                      : `0 0 15px ${isMe ? baseColor + '99' : 'rgba(255,255,255,0.1)'}`,
+                                  borderColor: isMe ? baseColor : 'rgba(255,255,255,0.08)',
                                   backgroundColor: isMe ? baseColor : 'rgba(255,255,255,0.05)'
                               }}
                             >
