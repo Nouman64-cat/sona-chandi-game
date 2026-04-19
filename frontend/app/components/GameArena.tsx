@@ -34,6 +34,12 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
   const lastActivityRef = useRef(Date.now());
   const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 Minutes
 
+  // Roulette selection state
+  const [showRoulette, setShowRoulette] = useState(false);
+  const [rouletteHighlight, setRouletteHighlight] = useState<number>(0); // index into groupMembers
+  const [rouletteWinner, setRouletteWinner] = useState<any>(null); // member object
+  const seenGameIdsRef = useRef<Set<number>>(new Set());
+
   // Activity Sensor Protocol
   useEffect(() => {
     const handleActivity = () => {
@@ -103,7 +109,6 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
         lastResultsCountRef.current = newResults.length;
         initializedRef.current = true;
       } else if (newResults.length > lastResultsCountRef.current) {
-        // Find the newest finisher
         const newest = newResults.sort((a: any, b: any) => b.created_at - a.created_at)[0];
         if (newest) {
             const member = groupMembers.find(m => Number(m.id) === Number(newest.user_id));
@@ -118,6 +123,57 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
       }
 
       setGameState(newState);
+
+      // --- First Legend Roulette ---
+      // Trigger only for fresh games (created within 20s) that we haven't shown yet
+      const gameId = newState.game_id;
+      const createdAt = newState.created_at;
+      const now = Math.floor(Date.now() / 1000);
+      const isFreshGame = createdAt && (now - createdAt) < 20;
+      if (isFreshGame && gameId && !seenGameIdsRef.current.has(gameId) && newState.status === 'active') {
+          seenGameIdsRef.current.add(gameId);
+          const firstUserId = newState.current_turn_user_id;
+          const winnerMember = groupMembers.find(m => Number(m.id) === Number(firstUserId));
+          if (winnerMember && groupMembers.length > 0) {
+              setShowRoulette(true);
+              setRouletteWinner(null);
+
+              // Build a roulette schedule: fast cycling → slow → land
+              const totalDuration = 3200; // ms
+              const schedule: number[] = [];
+              // Phase 1: 500ms, fast (80ms steps)
+              let elapsed = 0;
+              let step = 80;
+              while (elapsed < 1200) { schedule.push(step); elapsed += step; }
+              // Phase 2: slow down
+              for (const s of [120, 160, 200, 260, 320, 400, 500]) {
+                  schedule.push(s); elapsed += s;
+                  if (elapsed >= totalDuration) break;
+              }
+
+              const winnerIndex = groupMembers.findIndex(m => Number(m.id) === Number(firstUserId));
+              let currentIdx = 0;
+              let i = 0;
+
+              const runStep = () => {
+                  if (i < schedule.length - 1) {
+                      currentIdx = (currentIdx + 1) % groupMembers.length;
+                      setRouletteHighlight(currentIdx);
+                      i++;
+                      setTimeout(runStep, schedule[i]);
+                  } else {
+                      // Land on the actual winner
+                      setRouletteHighlight(winnerIndex);
+                      setRouletteWinner(winnerMember);
+                      // Auto-dismiss after 2.5s
+                      setTimeout(() => setShowRoulette(false), 2500);
+                  }
+              };
+
+              setTimeout(runStep, schedule[0]);
+          }
+      }
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -563,6 +619,88 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
               <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
               RE-ENGAGE ARENA
             </button>
+          </motion.div>
+        )}
+
+        {/* First Legend Roulette Overlay */}
+        {showRoulette && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[110] flex flex-col items-center justify-center bg-black/90 backdrop-blur-2xl"
+          >
+            {/* Header */}
+            <motion.div
+              initial={{ y: -30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="mb-8 text-center"
+            >
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-gold/60 mb-2">System Selecting</p>
+              <h2 className="text-2xl md:text-4xl font-black italic tracking-tighter uppercase text-white">
+                First Legend
+              </h2>
+            </motion.div>
+
+            {/* Player Roulette Drum */}
+            <div className="w-full max-w-sm space-y-2 px-6">
+              {groupMembers.map((member: any, idx: number) => {
+                const isHighlighted = idx === rouletteHighlight;
+                const isWinner = rouletteWinner && Number(member.id) === Number(rouletteWinner.id);
+                return (
+                  <motion.div
+                    key={member.id}
+                    animate={{
+                      scale: isHighlighted ? 1.06 : 1,
+                      opacity: isHighlighted ? 1 : 0.25,
+                      backgroundColor: isHighlighted
+                        ? (isWinner ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.12)')
+                        : 'rgba(255,255,255,0.03)',
+                    }}
+                    transition={{ duration: 0.1 }}
+                    className="flex items-center gap-4 rounded-2xl border px-5 py-3"
+                    style={{
+                      borderColor: isHighlighted
+                        ? (isWinner ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.3)')
+                        : 'rgba(255,255,255,0.05)',
+                      boxShadow: isHighlighted && isWinner
+                        ? '0 0 40px rgba(255,215,0,0.4)'
+                        : isHighlighted
+                        ? '0 0 20px rgba(255,255,255,0.15)'
+                        : 'none',
+                    }}
+                  >
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black uppercase ${isHighlighted && isWinner ? 'bg-gold text-black' : 'bg-white/10 text-white'}`}>
+                      {member.username?.[0] || 'U'}
+                    </div>
+                    <span className={`text-sm font-black tracking-tight ${isHighlighted ? 'text-white' : 'text-white/40'}`}>
+                      {member.full_name}
+                    </span>
+                    {isWinner && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="ml-auto text-[9px] font-black uppercase tracking-widest bg-gold text-black px-2 py-0.5 rounded-full"
+                      >
+                        FIRST MOVE
+                      </motion.span>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Winner announcement */}
+            {rouletteWinner && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8 text-center"
+              >
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gold/60">Chosen by System</p>
+                <p className="text-xl font-black text-gold mt-1">{rouletteWinner.full_name} goes first!</p>
+              </motion.div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

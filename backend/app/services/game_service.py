@@ -46,11 +46,12 @@ class GameService:
         if len(active_members) < 1:
             raise HTTPException(status_code=400, detail="Squad must have at least 1 member to start.")
 
-        # 5. Create Game
+        # 5. Create Game — first turn assigned randomly for fairness
+        first_player = random.choice(active_members)
         game = Game(
             group_id=group_id, 
             status="active", 
-            current_turn_user_id=requestor_id, # Starter goes first
+            current_turn_user_id=first_player.id,
             created_at=int(time.time())
         )
         session.add(game)
@@ -138,8 +139,9 @@ class GameService:
         return {
             "game_id": game.id,
             "status": game.status,
+            "created_at": game.created_at,
             "current_turn_user_id": game.current_turn_user_id,
-            "group_creator_id": group_creator_id, # Identity-lock payload
+            "group_creator_id": group_creator_id,
             "winner_id_1": game.winner_id_1, 
             "winner_id_2": game.winner_id_2,
             "results": [r.model_dump() for r in results],
