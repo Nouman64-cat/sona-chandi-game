@@ -390,15 +390,25 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                 </AnimatePresence>
 
                 {player.cards.map((card: any) => {
-                    // Normalize and categorize card type
+                    // Normalize card type name
                     const cardType = (card.card_type || '').toUpperCase();
-                    const isSona = cardType === 'SONA';
-                    const isChandi = cardType === 'CHANDI';
+
+                    // Canonical color map by card type name (set by admin via CardTemplate)
+                    // This ensures the correct color is always displayed even if DB value is wrong
+                    const CARD_COLOR_MAP: Record<string, string> = {
+                        'SONA': 'var(--gold)',
+                        'CHANDI': '#C0C0C0',
+                        'MOTI': '#EC4899',
+                        'HEERA': '#3B82F6',
+                    };
+
                     const isMe = Number(player.id) === Number(currentUserId);
                     
-                    // Determine the base color using system configuration with identity fallback
-                    let baseColor = card.color || 'var(--gold)';
-                    if (isSona) baseColor = 'var(--gold)'; // Maintain identity-shift for SONA archetypes
+                    // Resolve color: canonical map first, then DB value, then gold fallback
+                    const canonicalColor = CARD_COLOR_MAP[cardType];
+                    const dbColor = card.color;
+                    const isValidDbColor = dbColor && dbColor.startsWith('#') && dbColor.length >= 4 && dbColor.toLowerCase() !== '#ffffff' && dbColor.toLowerCase() !== '#fff';
+                    const baseColor = canonicalColor || (isValidDbColor ? dbColor : 'var(--gold)');
                     
                     // Determine text color strictly based on the global theme
                     const textColorClass = theme === 'light' ? 'text-slate-950 font-black' : 'text-white font-black';
