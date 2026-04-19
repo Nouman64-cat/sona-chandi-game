@@ -244,7 +244,6 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                   {[...(gameState.results || [])].sort((a: any, b: any) => a.position - b.position).map((res: any, idx: number) => {
                       const member = groupMembers.find(m => Number(m.id) === Number(res.user_id));
                       const isChampion = res.position === 1;
-                      const icons: any = { 1: "🥇", 2: "🥈", 3: "🥉" };
                       
                       return (
                           <motion.div 
@@ -255,8 +254,8 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                             className={`flex items-center justify-between p-4 md:p-6 rounded-[1.5rem] border ${isChampion ? 'bg-gold/10 border-gold shadow-lg shadow-gold/5' : 'bg-white/5 border-white/5'}`}
                           >
                               <div className="flex items-center gap-4 md:gap-6">
-                                  <div className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl font-bold text-sm md:text-base ${isChampion ? 'bg-gold text-black shadow-lg shadow-gold/20' : 'bg-white/10 text-white border border-white/10'}`}>
-                                      {icons[res.position] || `#${res.position}`}
+                                  <div className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl font-black text-sm md:text-base ${isChampion ? 'bg-gold text-black shadow-lg shadow-gold/20' : 'bg-white/10 text-white border border-white/10'}`}>
+                                      #{res.position}
                                   </div>
                                   <div className="text-left">
                                       <div className={`text-base md:text-xl font-black ${isChampion ? 'text-gold' : 'text-white'}`}>{member?.full_name || "Unknown Legend"}</div>
@@ -345,10 +344,9 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                     {(() => {
                         const res = results.find((r: any) => Number(r.user_id) === Number(player.id));
                         if (!res) return null;
-                        const icons: any = { 1: "🥇", 2: "🥈", 3: "🥉" };
                         return (
-                            <div className="absolute -left-3 -top-3 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-gold shadow-lg border-2 border-background z-20 text-[12px] font-bold">
-                                {icons[res.position] || res.position}
+                            <div className="absolute -left-3 -top-3 flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-gold shadow-lg border-2 border-background z-20 text-[10px] font-black">
+                                #{res.position}
                             </div>
                         );
                     })()}
