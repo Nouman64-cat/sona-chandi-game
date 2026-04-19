@@ -253,6 +253,8 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
 
   const results = gameState.results || [];
   const iHaveWon = results.some((r: any) => Number(r.user_id) === Number(currentUserId));
+  // Spectator mode: current user has finished (secured any position)
+  const iHaveFinished = results.some((r: any) => Number(r.user_id) === Number(currentUserId));
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-background md:p-6 lg:p-12 overflow-y-auto text-text-primary">
@@ -417,8 +419,15 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                     <h3 className={`text-base md:text-lg font-black tracking-tight ${player.isCurrentTurn ? 'text-gold' : ''}`}>{player.full_name}</h3>
                     <div className="flex items-center gap-2">
                         <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest ${Number(player.id) === Number(currentUserId) ? 'text-gold' : 'text-text-secondary'}`}>
-                            {Number(player.id) === Number(currentUserId) ? 'YOU' : 'ALLY'}
+                            {Number(player.id) === Number(currentUserId)
+                              ? (iHaveFinished ? 'SPECTATING' : 'YOU')
+                              : 'ALLY'}
                         </span>
+                        {iHaveFinished && Number(player.id) !== Number(currentUserId) && (
+                            <span className="text-[9px] font-black uppercase tracking-widest text-purple-400 flex items-center gap-1 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
+                                👁 VISIBLE
+                            </span>
+                        )}
                         {player.isCurrentTurn && (
                             <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gold italic flex items-center gap-1 bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20">
                                 <Sparkles size={8} /> CURRENT TURN
@@ -446,18 +455,15 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                 {player.cards.map((card: any) => {
                     const cardType = (card.card_type || '').toUpperCase();
                     const isMe = Number(player.id) === Number(currentUserId);
+                    // Spectator sees ally cards face-up (they've already finished)
+                    const isRevealed = isMe || iHaveFinished;
                     
                     // Use ONLY the admin-configured color from the DB.
-                    // Literal hex fallback #FFD700 (gold) — NO CSS variables so gender theme
-                    // has zero influence on card appearance.
                     const dbColor = card.color;
                     const isValidHex = dbColor && /^#([0-9A-Fa-f]{3,6})$/.test(dbColor) && dbColor.toLowerCase() !== '#ffffff' && dbColor.toLowerCase() !== '#fff';
                     const baseColor = isValidHex ? dbColor : '#FFD700';
                     
-                    // Text contrast: dark text on light cards, white on dark cards
                     const textColorClass = 'text-white font-black';
-                    
-                    // Ally card icon opacity
                     const allyIconColor = 'rgba(255, 255, 255, 0.4)';
 
                     return (
@@ -479,19 +485,22 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                               }}
                               className={`relative aspect-[2/3] w-16 md:w-24 rounded-xl md:rounded-2xl p-0.5 shadow-xl border-2 transition-all ${playingCard === card.id ? 'opacity-50 scale-95' : ''} ${selectedCardId !== null && Number(selectedCardId) === Number(card.id) ? 'ring-2 md:ring-4 ring-gold' : ''} ${isMe && isMyTurn ? 'cursor-pointer' : ''}`}
                               style={{ 
-                                  // All colors from admin DB — no CSS vars, no gender theme bleed
                                   boxShadow: selectedCardId !== null && Number(selectedCardId) === Number(card.id)
                                       ? `0 0 40px ${baseColor}CC`
-                                      : `0 0 15px ${isMe ? baseColor + '99' : 'rgba(255,255,255,0.1)'}`,
-                                  borderColor: isMe ? baseColor : 'rgba(255,255,255,0.08)',
-                                  backgroundColor: isMe ? baseColor : 'rgba(255,255,255,0.05)'
+                                      : isRevealed
+                                      ? `0 0 15px ${baseColor}99`
+                                      : `0 0 8px rgba(255,255,255,0.06)`,
+                                  borderColor: isRevealed ? baseColor : 'rgba(255,255,255,0.08)',
+                                  backgroundColor: isRevealed ? baseColor : 'rgba(255,255,255,0.05)',
+                                  // Spectator ally cards: slightly dimmed to distinguish from own cards
+                                  opacity: !isMe && iHaveFinished ? 0.85 : 1,
                               }}
                             >
                           <div className={`h-full w-full rounded-[0.55rem] md:rounded-[0.9rem] flex flex-col items-center justify-center relative overflow-hidden`}>
                             {/* Premium Shimmer Overlay */}
                             <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
                             
-                            {isMe ? (
+                            {isRevealed ? (
                                 <div className={`flex flex-col items-center justify-center gap-1 z-10 ${textColorClass}`}>
                                     <div className="text-[9px] md:text-[11px] uppercase tracking-widest opacity-60 mb-1">
                                         {cardType}
