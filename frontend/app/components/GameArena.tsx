@@ -477,7 +477,7 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                     
                     // Use ONLY the admin-configured color from the DB.
                     const dbColor = card.color;
-                    const isValidHex = dbColor && /^#([0-9A-Fa-f]{3,6})$/.test(dbColor) && dbColor.toLowerCase() !== '#ffffff' && dbColor.toLowerCase() !== '#fff';
+                    const isValidHex = dbColor && /^#([0-9A-Fa-f]{3,6})$/.test(dbColor);
                     const baseColor = isValidHex ? dbColor : '#FFD700';
                     
                     const textColorClass = 'text-white font-black';

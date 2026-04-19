@@ -58,6 +58,7 @@ export default function AdminDashboard() {
     setSuccessMsg(null);
     try {
       await api.put(`/admin/cards/${card.id}`, {
+        card_type: card.card_type,
         name: card.name,
         value: Number(card.value),
         color: card.color

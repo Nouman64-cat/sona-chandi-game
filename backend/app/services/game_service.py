@@ -91,8 +91,8 @@ class GameService:
         while len(deck) < total_cards_needed:
             key = all_type_keys[cycle_index % len(all_type_keys)]
             name, val, color = template_map[key]
-            # Ensure color is always a valid hex color 
-            safe_color = color if (color and color.startswith('#') and len(color) >= 4) else "#FFD700"
+            # Use the color from DB, defaulting to Gold (#FFD700) only if missing or invalid
+            safe_color = color if (color and color.startswith('#')) else "#FFD700"
             for _ in range(4):
                 deck.append((name, val, safe_color))
             cycle_index += 1
