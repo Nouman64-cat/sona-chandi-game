@@ -100,6 +100,12 @@ def add_member_heartbeat_field(session: Session):
     session.exec(text("ALTER TABLE groupmember ADD COLUMN IF NOT EXISTS last_arena_heartbeat INTEGER DEFAULT NULL;"))
     session.commit()
 
+def add_game_turn_order(session: Session):
+    """Evolution 009: Add turn_order to game table for randomized per-match sequencing."""
+    logger.info("Running Evolution 009: add_game_turn_order")
+    session.exec(text("ALTER TABLE game ADD COLUMN IF NOT EXISTS turn_order VARCHAR DEFAULT NULL;"))
+    session.commit()
+
 # --- Migration Registry ---
 # Order matters: oldest to newest
 MIGRATIONS = [
@@ -111,6 +117,7 @@ MIGRATIONS = [
     {"name": "006_add_group_beacon_fields", "func": add_group_beacon_fields},
     {"name": "007_add_member_ready_field", "func": add_member_ready_field},
     {"name": "008_add_member_heartbeat_field", "func": add_member_heartbeat_field},
+    {"name": "009_add_game_turn_order", "func": add_game_turn_order},
 ]
 
 def run_migrations(session: Session):

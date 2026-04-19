@@ -46,13 +46,18 @@ class GameService:
         if len(active_members) < 1:
             raise HTTPException(status_code=400, detail="Squad must have at least 1 member to start.")
 
-        # 5. Create Game — first turn assigned randomly for fairness
+        # 5. Create Game — shuffle turn order and first player for full randomness
         import random
-        first_player = random.choice(active_members)
+        shuffled_members = active_members[:]
+        random.shuffle(shuffled_members)
+        turn_order_str = ",".join(str(m.id) for m in shuffled_members)
+        first_player = shuffled_members[0]
+
         game = Game(
             group_id=group_id, 
             status="active", 
             current_turn_user_id=first_player.id,
+            turn_order=turn_order_str,
             created_at=int(time.time())
         )
         session.add(game)
@@ -163,11 +168,16 @@ class GameService:
         if not card or card.user_id != user_id:
             raise HTTPException(status_code=400, detail="You do not own this card.")
 
-        # Determine squad member IDs
-        members_stmt = select(GroupMember).where(GroupMember.group_id == game.group_id).order_by(GroupMember.user_id)
-        memberships = session.exec(members_stmt).all()
-        member_ids = [m.user_id for m in memberships]
-        
+        # Determine squad member IDs — use the game's stored random turn order
+        if game.turn_order:
+            # Use the shuffled order set at game initialization
+            member_ids = [int(uid) for uid in game.turn_order.split(",")]
+        else:
+            # Fallback for legacy games without turn_order
+            members_stmt = select(GroupMember).where(GroupMember.group_id == game.group_id).order_by(GroupMember.user_id)
+            memberships = session.exec(members_stmt).all()
+            member_ids = [m.user_id for m in memberships]
+
         if user_id not in member_ids:
             raise HTTPException(status_code=400, detail="Player not in this squad.")
             
@@ -187,11 +197,12 @@ class GameService:
             session.commit()
             return game
 
-        # Calculate next turn (skipping finished players)
+        # Calculate next turn in the shuffled order (skipping finished players)
         potential_index = (current_idx + 1) % len(member_ids)
         while member_ids[potential_index] in finished_user_ids:
             potential_index = (potential_index + 1) % len(member_ids)
         next_user_id = member_ids[potential_index]
+
 
         # 2. Perform Transfer
         card.user_id = next_user_id
