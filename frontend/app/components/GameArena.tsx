@@ -143,13 +143,14 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
   };
 
   const handleEndMatch = async () => {
-    if (!window.confirm("Are you sure you want to abandon the match?")) return;
+    if (!window.confirm("Are you sure you want to officially end the match for everyone?")) return;
     try {
       const { default: api } = await import('@/app/services/apiService');
-      await api.post(`/games/${gameState.game_id}/end`);
+      await api.post(`/games/${gameState.game_id}/end?requestor_id=${currentUserId}`);
       onClose();
     } catch (err: any) {
-      console.error(err);
+       alert(err.response?.data?.detail || "Termination failed.");
+       console.error(err);
     }
   };
 
@@ -297,15 +298,17 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
           </div>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
-          <button 
-            onClick={handleEndMatch}
-            className="flex-1 md:flex-none group flex items-center justify-center gap-2 rounded-xl md:rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-2 md:px-6 md:py-3 text-sm md:text-base font-bold text-red-500 transition-all hover:bg-red-500/10 active:scale-95"
-          >
-            <LogOut size={16} className="md:w-[18px] transition-transform group-hover:-translate-x-1" />
-            End Match
-          </button>
+          {Number(currentUserId) === Number(gameState?.group_creator_id) && (
+              <button 
+                onClick={handleEndMatch}
+                className="flex-1 md:flex-none group flex items-center justify-center gap-2 rounded-xl md:rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-2 md:px-6 md:py-3 text-sm md:text-base font-bold text-red-500 transition-all hover:bg-red-500/10 active:scale-95"
+              >
+                <LogOut size={16} className="md:w-[18px] transition-transform group-hover:-translate-x-1" />
+                End Match
+              </button>
+          )}
           <button onClick={onClose} className="flex-1 md:flex-none rounded-xl md:rounded-2xl border border-border-primary bg-card px-4 py-2 md:px-6 md:py-3 text-sm md:text-base font-bold transition-all hover:bg-white/5">
-            Exit
+            Exit Arena
           </button>
         </div>
       </header>

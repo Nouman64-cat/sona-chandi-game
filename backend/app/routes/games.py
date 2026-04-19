@@ -21,12 +21,23 @@ def play_turn(game_id: int, card_id: int, requestor_id: int, session: Session = 
     return GameService.play_turn(session, game_id, requestor_id, card_id)
 
 @router.post("/{game_id}/end")
-def end_game(game_id: int, session: Session = Depends(get_session)):
-    from app.models.user import Game
+def end_game(game_id: int, requestor_id: int, session: Session = Depends(get_session)):
+    from app.models.user import Game, Group
+    from fastapi import HTTPException
+    
     game = session.get(Game, game_id)
-    if game:
-        game.status = "finished"
-        session.add(game)
-        session.commit()
+    if not game:
+        raise HTTPException(status_code=404, detail="Active match terminal not found.")
+        
+    group = session.get(Group, game.group_id)
+    if not group or group.creator_id != requestor_id:
+        raise HTTPException(
+            status_code=403, 
+            detail="Tactical Authority Violation: Only the squad leader can decommission this battle."
+        )
+        
+    game.status = "finished"
+    session.add(game)
+    session.commit()
     return {"status": "success"}
 

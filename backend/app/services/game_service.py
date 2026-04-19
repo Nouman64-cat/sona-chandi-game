@@ -120,10 +120,15 @@ class GameService:
             for uid, last_hb in presence_results
         }
         
+        # Get group creator ID for permission handling
+        group = session.get(Group, game.group_id)
+        group_creator_id = group.creator_id if group else None
+        
         return {
             "game_id": game.id,
             "status": game.status,
             "current_turn_user_id": game.current_turn_user_id,
+            "group_creator_id": group_creator_id, # Identity-lock payload
             "winner_id_1": game.winner_id_1, 
             "winner_id_2": game.winner_id_2,
             "results": [r.model_dump() for r in results],
