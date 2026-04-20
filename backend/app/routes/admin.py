@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select, text
 from app.database.connection import get_session
-from app.models.user import User, CardTemplate, Group
+from app.models.user import User, CardTemplate, Group, Game
 from app.routes.auth import get_current_user
 from typing import List
 
