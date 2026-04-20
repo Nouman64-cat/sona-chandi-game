@@ -45,12 +45,12 @@ const Navbar = () => {
           // Background fetch for fresh profile_picture
           const { default: api } = await import('@/app/services/apiService');
           const res = await api.get('/auth/me');
-          setUserInfo({
+          setUserInfo(prev => ({
             name: res.data.full_name,
             username: res.data.username,
-            isAdmin: res.data.is_admin,
+            isAdmin: prev?.isAdmin || false,
             profilePicture: res.data.profile_picture_url
-          });
+          }));
         } catch (e) {
           console.error("Auth sync error", e);
         }
@@ -84,9 +84,9 @@ const Navbar = () => {
           
           {userInfo?.isAdmin && (
             <div className="mt-8 flex flex-col gap-2 w-full border-t border-white/5 pt-8">
-              <h3 className="hidden px-3 text-[10px] font-black uppercase tracking-[0.2em] text-gold/60 lg:block mb-2">Commander Hub</h3>
+              <h3 className="hidden px-3 text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary lg:block mb-2">Commander Hub</h3>
               <Link href={adminItem.path} className="group relative">
-                <div className={`flex items-center gap-4 rounded-xl p-3 transition-all duration-300 ${pathname === adminItem.path ? 'bg-gold/10 text-gold' : 'text-gold/60 hover:bg-gold/5 hover:text-gold'}`}>
+                <div className={`flex items-center gap-4 rounded-xl p-3 transition-all duration-300 ${pathname === adminItem.path ? 'bg-gold/10 text-gold' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'}`}>
                   <adminItem.icon size={24} />
                   <span className="hidden font-medium lg:block">{adminItem.label}</span>
                   {pathname === adminItem.path && (
@@ -95,7 +95,7 @@ const Navbar = () => {
                 </div>
               </Link>
               <Link href={adminUsersItem.path} className="group relative">
-                <div className={`flex items-center gap-4 rounded-xl p-3 transition-all duration-300 ${pathname === adminUsersItem.path ? 'bg-gold/10 text-gold' : 'text-gold/60 hover:bg-gold/5 hover:text-gold'}`}>
+                <div className={`flex items-center gap-4 rounded-xl p-3 transition-all duration-300 ${pathname === adminUsersItem.path ? 'bg-gold/10 text-gold' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'}`}>
                   <adminUsersItem.icon size={24} />
                   <span className="hidden font-medium lg:block">{adminUsersItem.label}</span>
                   {pathname === adminUsersItem.path && (
@@ -154,7 +154,7 @@ const Navbar = () => {
 
         {userInfo?.isAdmin && (
           <Link href={adminItem.path} className="relative flex flex-col items-center gap-1">
-            <div className={`rounded-xl p-2 transition-all ${pathname === adminItem.path ? 'text-gold' : 'text-gold/60'}`}>
+            <div className={`rounded-xl p-2 transition-all ${pathname === adminItem.path ? 'text-gold' : 'text-text-secondary'}`}>
               <adminItem.icon size={24} />
               {pathname === adminItem.path && (
                 <motion.div layoutId="nav-dot" className="absolute -bottom-1 h-1 w-1 rounded-full bg-gold" />
