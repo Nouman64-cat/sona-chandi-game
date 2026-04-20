@@ -373,8 +373,15 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                             className={`flex items-center justify-between p-4 md:p-6 rounded-[1.5rem] border ${isChampion ? 'bg-gold/10 border-gold shadow-lg shadow-gold/5' : 'bg-white/5 border-white/5'}`}
                           >
                               <div className="flex items-center gap-4 md:gap-6">
-                                  <div className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl font-black text-sm md:text-base ${isChampion ? 'bg-gold text-black shadow-lg shadow-gold/20' : 'bg-white/10 text-white border border-white/10'}`}>
-                                      #{res.position}
+                                  <div className={`relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl font-black text-sm md:text-base overflow-hidden border ${isChampion ? 'bg-gold/20 text-gold shadow-lg shadow-gold/20 border-gold/50' : 'bg-white/10 text-white border-white/10'}`}>
+                                      {member?.profile_picture_url ? (
+                                          <img src={member.profile_picture_url} className="h-full w-full object-cover" alt="" />
+                                      ) : (
+                                          member?.username?.[0] || 'U'
+                                      )}
+                                      <div className={`absolute -left-1 -top-1 md:-left-2 md:-top-2 flex h-4 w-4 md:h-6 md:w-6 items-center justify-center rounded-full text-[8px] md:text-[10px] font-black z-10 ${isChampion ? 'bg-gold text-black border-2 border-background' : 'bg-white/20 text-white/80'}`}>
+                                          #{res.position}
+                                      </div>
                                   </div>
                                   <div className="text-left">
                                       <div className={`text-base md:text-xl font-black ${isChampion ? 'text-gold' : 'text-white'}`}>{member?.full_name || "Unknown Legend"}</div>
@@ -449,7 +456,12 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                                         return (
                                             <tr key={member.id} className="hover:bg-white/5 transition-colors">
                                                 <td className="p-3 md:p-4 px-4 md:px-6 font-bold text-white text-xs md:text-sm">
-                                                    {member.username || member.full_name.split(' ')[0]}
+                                                    <div className="flex items-center gap-3">
+                                                       <div className="flex h-6 w-6 md:h-8 md:w-8 items-center justify-center rounded-lg bg-white/10 text-[10px] md:text-xs font-black uppercase overflow-hidden">
+                                                           {member.profile_picture_url ? <img src={member.profile_picture_url} className="h-full w-full object-cover" alt="" /> : (member.username || member.full_name)[0]}
+                                                       </div>
+                                                       {member.username || member.full_name.split(' ')[0]}
+                                                    </div>
                                                 </td>
                                                 {gameState.round_history.map((r: any) => {
                                                     const perf = r.results.find((cr: any) => Number(cr.user_id) === Number(member.id));
@@ -534,8 +546,8 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
               if (!me) return null;
               return (
                   <div className="flex items-center gap-3 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md mr-2 md:mr-4">
-                      <div className={`flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-br ${me.theme.from} ${me.theme.to} text-black text-[10px] md:text-xs font-black uppercase shadow-lg`}>
-                          {me.username?.[0] || 'U'}
+                      <div className={`flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-br ${me.theme.from} ${me.theme.to} text-black text-[10px] md:text-xs font-black uppercase shadow-lg overflow-hidden`}>
+                          {me.profile_picture_url ? <img src={me.profile_picture_url} className="h-full w-full object-cover" alt="" /> : me.username?.[0] || 'U'}
                       </div>
                       <div className="hidden sm:flex flex-col">
                           <span className="text-[10px] font-black text-white leading-none">{me.full_name}</span>
@@ -586,8 +598,8 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
               <div className={`absolute -right-16 -top-16 h-32 w-32 md:h-48 md:w-48 rounded-full bg-gradient-to-br ${player.theme.from} ${player.theme.to} ${player.isCurrentTurn ? 'opacity-30' : 'opacity-10'} blur-2xl md:blur-3xl`} />
               
               <div className="mb-4 md:mb-6 flex items-center gap-3 md:gap-4 self-start relative z-10">
-                  <div className={`relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl bg-gradient-to-br ${player.theme.from} ${player.theme.to} text-black text-sm md:text-base font-black uppercase shadow-lg ${player.isCurrentTurn ? 'ring-4 ring-gold/40 shadow-[0_0_15px_var(--gender-glow)]' : ''}`}>
-                    {player.username?.[0] || 'U'}
+                  <div className={`relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl bg-gradient-to-br border border-black/10 ${player.theme.from} ${player.theme.to} text-black text-sm md:text-base font-black uppercase shadow-lg ${player.isCurrentTurn ? 'ring-4 ring-gold/40 shadow-[0_0_15px_var(--gender-glow)]' : ''}`}>
+                    {player.profile_picture_url ? <img src={player.profile_picture_url} className="h-full w-full object-cover rounded-[10px] md:rounded-[14px]" alt="" /> : player.username?.[0] || 'U'}
                     {(() => {
                         const res = results.find((r: any) => Number(r.user_id) === Number(player.id));
                         if (!res) return null;
