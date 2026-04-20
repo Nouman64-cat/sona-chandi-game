@@ -31,6 +31,7 @@ class User(SQLModel, table=True):
     number: str
     password: str
     is_admin: bool = Field(default=False)
+    profile_picture_url: Optional[str] = Field(default=None)
 
     # Many-to-Many Groups
     groups: List["Group"] = Relationship(back_populates="members", link_model=GroupMember)
@@ -64,6 +65,7 @@ class UserBase(SQLModel):
     email: EmailStr
     gender: str
     number: str
+    profile_picture_url: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str

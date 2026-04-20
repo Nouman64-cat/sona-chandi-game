@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Lock, User as UserIcon, Loader2 } from 'lucide-react';
+import { Lock, User as UserIcon, Loader2, Eye, EyeOff } from 'lucide-react';
 import api from '@/app/services/apiService';
 import { useTheme } from '@/app/components/ThemeProvider';
 
@@ -12,6 +12,7 @@ export default function LoginPage() {
   const { refreshGender } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -78,13 +79,20 @@ export default function LoginPage() {
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={20} />
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
-                className="w-full rounded-2xl border border-border-primary bg-bg-secondary py-4 pl-12 pr-4 outline-none transition-all focus:border-gold/50"
+                className="w-full rounded-2xl border border-border-primary bg-bg-secondary py-4 pl-12 pr-12 outline-none transition-all focus:border-gold/50"
               />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-gold transition-colors"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
           </div>
 

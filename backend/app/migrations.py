@@ -119,6 +119,12 @@ def add_game_series_id(session: Session):
     session.exec(text("ALTER TABLE game ADD COLUMN IF NOT EXISTS series_id VARCHAR DEFAULT NULL;"))
     session.commit()
 
+def add_profile_picture_url(session: Session):
+    """Evolution 012: Add profile_picture_url to user table."""
+    logger.info("Running Evolution 012: add_profile_picture_url")
+    session.exec(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS profile_picture_url VARCHAR DEFAULT NULL;"))
+    session.commit()
+
 # --- Migration Registry ---
 # Order matters: oldest to newest
 MIGRATIONS = [
@@ -133,6 +139,7 @@ MIGRATIONS = [
     {"name": "009_add_game_turn_order", "func": add_game_turn_order},
     {"name": "010_add_card_icon_fields", "func": add_card_icon_fields},
     {"name": "011_add_game_series_id", "func": add_game_series_id},
+    {"name": "012_add_profile_picture_url", "func": add_profile_picture_url},
 ]
 
 def run_migrations(session: Session):

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Lock, User as UserIcon, Mail, Phone, UserCircle, Loader2 } from 'lucide-react';
+import { Lock, User as UserIcon, Mail, Phone, UserCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import api from '@/app/services/apiService';
 
 export default function RegisterPage() {
@@ -16,6 +16,7 @@ export default function RegisterPage() {
     number: '',
     password: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -128,10 +129,17 @@ export default function RegisterPage() {
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input 
-                type="password" name="password" required value={formData.password} onChange={handleChange}
+                type={showPassword ? "text" : "password"} name="password" required value={formData.password} onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-border-primary bg-bg-secondary py-3 pl-11 pr-4 outline-none transition-all focus:border-gold/50"
+                className="w-full rounded-xl border border-border-primary bg-bg-secondary py-3 pl-11 pr-11 outline-none transition-all focus:border-gold/50"
               />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-gold transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
