@@ -431,7 +431,9 @@ function GroupsContent() {
                                           <div key={member.id} className="flex items-center justify-between rounded-2xl bg-white/5 p-4 relative overflow-hidden">
                                               {member.is_ready && <div className="absolute left-0 top-0 h-full w-1 bg-green-500" />}
                                               <div className="flex items-center gap-3">
-                                                  <div className="h-8 w-8 rounded-lg bg-silver/10 flex items-center justify-center text-xs font-bold uppercase">{member.username[0]}</div>
+                                                  <div className="h-8 w-8 rounded-lg bg-silver/10 flex items-center justify-center text-xs font-bold uppercase overflow-hidden">
+                                                      {member.profile_picture_url ? <img src={member.profile_picture_url} className="h-full w-full object-cover" alt="" /> : member.username[0]}
+                                                  </div>
                                                   <div className="flex flex-col">
                                                       <span className="font-medium text-sm">{member.full_name}</span>
                                                       <span className={`text-[10px] font-bold uppercase tracking-tighter ${member.is_ready ? 'text-green-500' : 'text-text-secondary'}`}>

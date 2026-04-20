@@ -27,22 +27,36 @@ const Navbar = () => {
     { label: 'Profile', icon: UserIcon, path: '/profile' },
   ];
 
-  const [userInfo, setUserInfo] = React.useState<{name: string, username: string, isAdmin: boolean} | null>(null);
+  const [userInfo, setUserInfo] = React.useState<{name: string, username: string, isAdmin: boolean, profilePicture?: string} | null>(null);
 
   React.useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setUserInfo({
-          name: payload.full_name || 'Legend',
-          username: payload.username || 'unknown',
-          isAdmin: !!payload.is_admin
-        });
-      } catch (e) {
-        console.error("Token parse error", e);
+    const fetchUser = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          // Token minimal display first for speed
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          setUserInfo({
+            name: payload.full_name || 'Legend',
+            username: payload.username || 'unknown',
+            isAdmin: !!payload.is_admin
+          });
+          
+          // Background fetch for fresh profile_picture
+          const { default: api } = await import('@/app/services/apiService');
+          const res = await api.get('/auth/me');
+          setUserInfo({
+            name: res.data.full_name,
+            username: res.data.username,
+            isAdmin: res.data.is_admin,
+            profilePicture: res.data.profile_picture_url
+          });
+        } catch (e) {
+          console.error("Auth sync error", e);
+        }
       }
-    }
+    };
+    fetchUser();
   }, []);
 
   const adminItem = { label: 'Intelligence', icon: Settings, path: '/admin' };
@@ -96,8 +110,12 @@ const Navbar = () => {
         <div className="mt-auto flex flex-col gap-4 w-full">
           {userInfo && (
             <div className="mb-4 hidden items-center gap-3 rounded-2xl bg-white/5 p-4 lg:flex">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold text-black font-black uppercase shadow-lg shadow-gold/20">
-                {userInfo.name[0]}
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold text-black font-black uppercase shadow-lg shadow-gold/20 overflow-hidden">
+                {userInfo.profilePicture ? (
+                  <img src={userInfo.profilePicture} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  userInfo.name[0]
+                )}
               </div>
               <div className="overflow-hidden">
                 <p className="truncate text-sm font-bold text-text-primary">{userInfo.name}</p>

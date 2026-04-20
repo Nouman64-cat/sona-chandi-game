@@ -114,8 +114,8 @@ export default function SearchPage() {
                   className="glass flex items-center justify-between rounded-3xl p-6 border border-black/5 dark:border-white/5"
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl font-bold uppercase ${user.is_self ? 'bg-gold/20 text-gold' : 'bg-black/10 dark:bg-silver/10 text-text-secondary'}`}>
-                      {user.username[0]}
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl font-bold uppercase overflow-hidden ${user.is_self ? 'bg-gold/20 text-gold' : 'bg-black/10 dark:bg-silver/10 text-text-secondary'}`}>
+                      {user.profile_picture_url ? <img src={user.profile_picture_url} className="h-full w-full object-cover" alt="" /> : user.username[0]}
                     </div>
                     <div>
                       <div className="flex items-center gap-2 font-bold text-text-primary">

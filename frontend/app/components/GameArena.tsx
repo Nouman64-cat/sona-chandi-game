@@ -883,8 +883,8 @@ export default function GameArena({ groupId, currentUserId, groupMembers, onClos
                         : 'none',
                     }}
                   >
-                    <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black uppercase ${isHighlighted && isWinner ? 'bg-gold text-black' : 'bg-white/10 text-white'}`}>
-                      {member.username?.[0] || 'U'}
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black uppercase overflow-hidden ${isHighlighted && isWinner ? 'bg-gold text-black' : 'bg-white/10 text-white'}`}>
+                      {member.profile_picture_url ? <img src={member.profile_picture_url} className="h-full w-full object-cover" alt="" /> : member.username?.[0] || 'U'}
                     </div>
                     <span className={`text-sm font-black tracking-tight ${isHighlighted ? 'text-white' : 'text-white/40'}`}>
                       {member.full_name}

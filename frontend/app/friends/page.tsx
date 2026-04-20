@@ -129,8 +129,8 @@ export default function FriendsPage() {
                           className="glass border-gold/20 flex items-center justify-between rounded-3xl p-6 shadow-lg shadow-gold/5"
                         >
                           <div className="flex items-center gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold text-black font-black uppercase">
-                              {req.username[0]}
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold text-black font-black uppercase overflow-hidden">
+                              {req.profile_picture_url ? <img src={req.profile_picture_url} className="h-full w-full object-cover" alt="" /> : req.username[0]}
                             </div>
                             <div>
                               <div className="font-bold text-text-primary">{req.full_name}</div>
@@ -176,8 +176,8 @@ export default function FriendsPage() {
                         className="glass flex items-center justify-between rounded-3xl p-6"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/10 text-gold font-bold uppercase">
-                            {friend.username[0]}
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/10 text-gold font-bold uppercase overflow-hidden">
+                            {friend.profile_picture_url ? <img src={friend.profile_picture_url} className="h-full w-full object-cover" alt="" /> : friend.username[0]}
                           </div>
                           <div>
                             <div className="font-bold text-text-primary">{friend.full_name}</div>
