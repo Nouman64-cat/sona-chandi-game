@@ -13,6 +13,7 @@ interface User {
   email: string;
   gender: string;
   number: string;
+  is_private?: boolean;
   profile_picture_url?: string;
 }
 
@@ -21,6 +22,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [togglingPrivacy, setTogglingPrivacy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -68,6 +70,19 @@ export default function ProfilePage() {
       setError(err.response?.data?.detail || 'Failed to upload profile picture.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handlePrivacyToggle = async () => {
+    if (!user) return;
+    setTogglingPrivacy(true);
+    try {
+      const response = await api.post(`/users/me/privacy?is_private=${!user.is_private}`);
+      setUser(response.data);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to update privacy settings.');
+    } finally {
+      setTogglingPrivacy(false);
     }
   };
 
@@ -180,14 +195,31 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-text-secondary tracking-wider">Phone</label>
-                  <div className="flex items-center gap-3 rounded-2xl bg-bg-secondary p-4 border border-border-primary">
-                    <Phone className="text-gold flex-shrink-0" size={20} />
-                    <span className="truncate">{user?.number}</span>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-text-secondary tracking-wider">Phone</label>
+                    <div className="flex items-center gap-3 rounded-2xl bg-bg-secondary p-4 border border-border-primary">
+                      <Phone className="text-gold flex-shrink-0" size={20} />
+                      <span className="truncate">{user?.number}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                {/* Privacy Setting Integration */}
+                <div className="mt-8 pt-6 border-t border-border-primary">
+                  <div className="flex items-center justify-between">
+                     <div>
+                       <h3 className="font-bold text-lg">Private Legend Account</h3>
+                       <p className="text-xs text-text-secondary mt-1 max-w-sm">If enabled, your profile is hidden from the public Search Network, but you can still launch matches via Alliance Beacons.</p>
+                     </div>
+                     <button
+                       onClick={handlePrivacyToggle}
+                       disabled={togglingPrivacy}
+                       className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none flex-shrink-0 ml-4 ${user?.is_private ? 'bg-gold' : 'bg-gray-600'}`}
+                     >
+                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${user?.is_private ? 'translate-x-6' : 'translate-x-1'}`} />
+                     </button>
+                  </div>
+                </div>
             </div>
           </div>
         </motion.div>

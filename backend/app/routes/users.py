@@ -60,3 +60,15 @@ async def upload_profile_picture(
 
     return current_user
 
+@router.post("/me/privacy", response_model=UserRead)
+def update_privacy(
+    is_private: bool,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    current_user.is_private = is_private
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    return current_user
+

@@ -125,6 +125,12 @@ def add_profile_picture_url(session: Session):
     session.exec(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS profile_picture_url VARCHAR DEFAULT NULL;"))
     session.commit()
 
+def add_user_privacy_field(session: Session):
+    """Evolution 013: Add is_private flag to user table."""
+    logger.info("Running Evolution 013: add_user_privacy_field")
+    session.exec(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE;"))
+    session.commit()
+
 # --- Migration Registry ---
 # Order matters: oldest to newest
 MIGRATIONS = [
@@ -140,6 +146,7 @@ MIGRATIONS = [
     {"name": "010_add_card_icon_fields", "func": add_card_icon_fields},
     {"name": "011_add_game_series_id", "func": add_game_series_id},
     {"name": "012_add_profile_picture_url", "func": add_profile_picture_url},
+    {"name": "013_add_user_privacy_field", "func": add_user_privacy_field},
 ]
 
 def run_migrations(session: Session):

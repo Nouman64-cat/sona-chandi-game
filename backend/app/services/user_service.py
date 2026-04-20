@@ -15,7 +15,10 @@ class UserService:
                 (User.username.ilike(f"%{query}%")) | (User.full_name.ilike(f"%{query}%"))
             )
             
-        # Exclude self if searcher_id is provided
+        # Exclude private accounts
+        statement = statement.where((User.is_private == False) | (User.id == searcher_id))
+
+        # Exclude self from search results if searcher_id is provided
         if searcher_id:
             statement = statement.where(User.id != searcher_id)
 

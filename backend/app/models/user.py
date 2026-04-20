@@ -31,6 +31,7 @@ class User(SQLModel, table=True):
     number: str
     password: str
     is_admin: bool = Field(default=False)
+    is_private: bool = Field(default=False)
     profile_picture_url: Optional[str] = Field(default=None)
 
     # Many-to-Many Groups
@@ -65,6 +66,7 @@ class UserBase(SQLModel):
     email: EmailStr
     gender: str
     number: str
+    is_private: bool = False
     profile_picture_url: Optional[str] = None
 
 class UserCreate(UserBase):
