@@ -78,6 +78,7 @@ async def purge_user(
     # 3. Neutralize active match influence in other squads
     # Ensure no games are blocked by this user being the current turn holder or winner
     session.exec(text("UPDATE game SET current_turn_user_id = NULL WHERE current_turn_user_id = :u").bindparams(u=user_id))
+    session.exec(text("UPDATE game SET winner_id = NULL WHERE winner_id = :u").bindparams(u=user_id))
     session.exec(text("UPDATE game SET winner_id_1 = NULL WHERE winner_id_1 = :u").bindparams(u=user_id))
     session.exec(text("UPDATE game SET winner_id_2 = NULL WHERE winner_id_2 = :u").bindparams(u=user_id))
 
