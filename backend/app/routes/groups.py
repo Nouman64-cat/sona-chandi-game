@@ -68,7 +68,8 @@ def list_group_members(group_id: int, session: Session = Depends(get_session)):
         {
             "id": u.id, 
             "full_name": u.full_name, 
-            "username": u.username, 
+            "username": u.username,
+            "profile_picture_url": u.profile_picture_url,
             "is_ready": is_ready,
             "is_online": last_hb is not None and (now - last_hb) < 15
         } for u, is_ready, last_hb in results
