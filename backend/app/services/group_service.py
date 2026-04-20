@@ -46,6 +46,7 @@ class GroupService:
             raise HTTPException(status_code=403, detail="Only the Squad Commander can disband this formation.")
         
         # 1. Purge match history ecosystem for this squad
+        session.exec(text("DELETE FROM gameresult WHERE game_id IN (SELECT id FROM game WHERE group_id = :gid)").bindparams(gid=group_id))
         # Delete cards associated with games of this group
         session.exec(text("DELETE FROM playercard WHERE game_id IN (SELECT id FROM game WHERE group_id = :gid)").bindparams(gid=group_id))
         # Delete the matches themselves
