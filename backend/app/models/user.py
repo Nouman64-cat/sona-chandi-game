@@ -33,6 +33,8 @@ class User(SQLModel, table=True):
     is_admin: bool = Field(default=False)
     is_private: bool = Field(default=False)
     profile_picture_url: Optional[str] = Field(default=None)
+    reset_token: Optional[str] = Field(default=None, index=True)
+    reset_token_expires: Optional[int] = Field(default=None)
 
     # Many-to-Many Groups
     groups: List["Group"] = Relationship(back_populates="members", link_model=GroupMember)
@@ -141,4 +143,11 @@ class GameResult(SQLModel, table=True):
 class UserSearchResponse(UserRead):
     is_friend: bool = False
     is_self: bool = False
+
+class ForgotPasswordRequest(SQLModel):
+    email: EmailStr
+
+class ResetPasswordRequest(SQLModel):
+    token: str
+    new_password: str
 

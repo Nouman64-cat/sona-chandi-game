@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlmodel import Session
 from app.database.connection import get_session
-from app.models.user import User, UserCreate, UserRead, UserLogin, Token
+from app.models.user import User, UserCreate, UserRead, UserLogin, Token, ForgotPasswordRequest, ResetPasswordRequest
 from app.services.auth_service import AuthService
 from app.config.settings import settings
 
@@ -42,3 +42,13 @@ def login(user_login: UserLogin, session: Session = Depends(get_session)):
 def get_me(current_user: User = Depends(get_current_user)):
     """Security Handshake: Verify legend's identity still exists in the archives."""
     return current_user
+
+@router.post("/forgot-password", status_code=status.HTTP_200_OK)
+def forgot_password(request: ForgotPasswordRequest, session: Session = Depends(get_session)):
+    AuthService.forgot_password(session, request.email)
+    return {"message": "If this email is registered, a password reset link has been sent."}
+
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+def reset_password(request: ResetPasswordRequest, session: Session = Depends(get_session)):
+    AuthService.reset_password(session, request.token, request.new_password)
+    return {"message": "Password reset successfully."}

@@ -15,7 +15,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem('token');
       
       // 1. If no token and trying to reach a protected page, redirect
-      const isPublicPage = pathname === '/auth/login' || pathname === '/auth/register' || pathname === '/';
+      const isPublicPage = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password', '/'].includes(pathname);
       
       if (!token) {
         if (!isPublicPage) {

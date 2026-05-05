@@ -131,6 +131,13 @@ def add_user_privacy_field(session: Session):
     session.exec(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE;"))
     session.commit()
 
+def add_reset_token_fields(session: Session):
+    """Evolution 014: Add reset_token and reset_token_expires to user table for forgot-password flow."""
+    logger.info("Running Evolution 014: add_reset_token_fields")
+    session.exec(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS reset_token VARCHAR DEFAULT NULL;"))
+    session.exec(text("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS reset_token_expires INTEGER DEFAULT NULL;"))
+    session.commit()
+
 # --- Migration Registry ---
 # Order matters: oldest to newest
 MIGRATIONS = [
@@ -147,6 +154,7 @@ MIGRATIONS = [
     {"name": "011_add_game_series_id", "func": add_game_series_id},
     {"name": "012_add_profile_picture_url", "func": add_profile_picture_url},
     {"name": "013_add_user_privacy_field", "func": add_user_privacy_field},
+    {"name": "014_add_reset_token_fields", "func": add_reset_token_fields},
 ]
 
 def run_migrations(session: Session):
