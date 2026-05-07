@@ -140,6 +140,12 @@ class GameResult(SQLModel, table=True):
     points: int # sum of 4 cards
     created_at: int = Field(default_factory=lambda: int(time.time()))
 
+class CardTemplateCreate(SQLModel):
+    name: str
+    value: int
+    color: str = "#FFD700"
+    icon: str = "Shield"
+
 class UserSearchResponse(UserRead):
     is_friend: bool = False
     is_self: bool = False

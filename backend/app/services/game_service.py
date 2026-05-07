@@ -95,25 +95,26 @@ class GameService:
         
         # All available card types (A=Sona, B=Chandi, C=Moti, D=Heera, etc.)
         all_type_keys = sorted(template_map.keys())  # Use all types defined in DB
-        
+        num_players = len(active_members)
+
         if not all_type_keys:
-            # Emergency fallback if no templates exist in DB
-            raise Exception("No card templates found. Ask admin to set up card types first.")
-        
-        # We need exactly 4 cards per player = total_cards
-        total_cards_needed = len(active_members) * 4
-        
-        # Build deck by cycling through card types until we have enough cards
-        # Each cycle adds 4 cards of a type (one "set")
-        cycle_index = 0
-        while len(deck) < total_cards_needed:
-            key = all_type_keys[cycle_index % len(all_type_keys)]
+            raise HTTPException(status_code=400, detail="No card templates found. Ask admin to set up card types first.")
+
+        if len(all_type_keys) < num_players:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Not enough card types for {num_players} players. Admin must create at least {num_players} card types (currently {len(all_type_keys)} exist)."
+            )
+
+        # Use exactly one card type per player — first N types alphabetically
+        selected_keys = all_type_keys[:num_players]
+
+        # Build deck: exactly 4 cards of each selected type (4 * N total)
+        for key in selected_keys:
             name, val, color, icon = template_map[key]
-            # Use the color from DB, defaulting to Gold (#FFD700) only if missing or invalid
             safe_color = color if (color and color.startswith('#')) else "#FFD700"
             for _ in range(4):
                 deck.append((name, val, safe_color, icon))
-            cycle_index += 1
         
         # SHUFFLE for fair distribution
         random.shuffle(deck)

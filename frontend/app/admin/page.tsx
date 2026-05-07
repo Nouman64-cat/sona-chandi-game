@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '@/app/components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   Settings, Save, Shield, Swords, Sparkles, Loader2, AlertCircle, CheckCircle2,
   Crown, Zap, Flame, Trophy, Gem, Coins, CircleDollarSign, Award, Star, Component,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Plus, Trash2
 } from 'lucide-react';
 import api from '@/app/services/apiService';
 
@@ -44,6 +44,9 @@ export default function AdminDashboard() {
   const [cards, setCards] = useState<CardTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<number | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -106,14 +109,67 @@ export default function AdminDashboard() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const nextCard = () => {
+    setConfirmDelete(null);
     setCurrentIndex((prev) => (prev + 1) % cards.length);
   };
 
   const prevCard = () => {
+    setConfirmDelete(null);
     setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length);
   };
 
   const currentCard = cards[currentIndex];
+
+  const handleCreate = async () => {
+    setCreating(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const response = await api.post('/admin/cards', {
+        name: 'New Legend',
+        value: 100,
+        color: '#FFD700',
+        icon: 'Shield',
+      });
+      const newCard: CardTemplate = response.data;
+      setCards(prev => {
+        const updated = [...prev, newCard];
+        setCurrentIndex(updated.length - 1);
+        return updated;
+      });
+      setSuccessMsg(`Card type '${newCard.card_type}' created!`);
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to create card type.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDelete = async (card: CardTemplate) => {
+    if (confirmDelete !== card.id) {
+      setConfirmDelete(card.id);
+      return;
+    }
+    setDeleting(card.id);
+    setConfirmDelete(null);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      await api.delete(`/admin/cards/${card.id}`);
+      setCards(prev => {
+        const updated = prev.filter(c => c.id !== card.id);
+        setCurrentIndex(idx => Math.min(idx, Math.max(0, updated.length - 1)));
+        return updated;
+      });
+      setSuccessMsg(`Card type '${card.card_type}' deleted.`);
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to delete card type.');
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -165,13 +221,23 @@ export default function AdminDashboard() {
             <h1 className="text-4xl md:text-5xl font-black italic tracking-tighter uppercase mb-4">
               Arena <span className="silver-text">Intelligence</span>
             </h1>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
                 <p className="text-text-secondary italic">Redefine the economy of the Sona Chandi Arena.</p>
-                {cards.length > 0 && (
-                    <div className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/20 text-gold font-black text-xs uppercase tracking-widest">
-                        Legend {currentIndex + 1} of {cards.length}
-                    </div>
-                )}
+                <div className="flex items-center gap-3">
+                    {cards.length > 0 && (
+                        <div className="px-4 py-2 rounded-xl bg-gold/10 border border-gold/20 text-gold font-black text-xs uppercase tracking-widest">
+                            {currentIndex + 1} / {cards.length} types
+                        </div>
+                    )}
+                    <button
+                        onClick={handleCreate}
+                        disabled={creating}
+                        className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gold text-black font-black text-xs uppercase tracking-widest shadow-lg shadow-gold/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                        {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                        Add Card Type
+                    </button>
+                </div>
             </div>
           </header>
 
@@ -331,7 +397,7 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
 
-                                <button 
+                                <button
                                     onClick={() => handleUpdate(currentCard)}
                                     disabled={saving === currentCard.id}
                                     className="w-full flex items-center justify-center gap-4 rounded-[2rem] bg-gold p-6 font-black text-black shadow-xl shadow-gold/20 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
@@ -342,6 +408,25 @@ export default function AdminDashboard() {
                                         <>
                                             <Save size={24} />
                                             <span className="text-xl italic tracking-tighter uppercase">Commit Intelligence</span>
+                                        </>
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={() => handleDelete(currentCard)}
+                                    disabled={deleting === currentCard.id}
+                                    className={`w-full flex items-center justify-center gap-3 rounded-[2rem] p-4 font-black text-sm uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50 border ${
+                                        confirmDelete === currentCard.id
+                                            ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/20 hover:bg-red-600'
+                                            : 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
+                                    }`}
+                                >
+                                    {deleting === currentCard.id ? (
+                                        <Loader2 className="animate-spin" size={18} />
+                                    ) : (
+                                        <>
+                                            <Trash2 size={18} />
+                                            <span>{confirmDelete === currentCard.id ? 'Confirm Delete?' : 'Delete Card Type'}</span>
                                         </>
                                     )}
                                 </button>
@@ -358,7 +443,7 @@ export default function AdminDashboard() {
                   <h4 className="font-black uppercase tracking-tighter">Arena Pro-Tip</h4>
               </div>
               <p className="text-sm text-text-secondary">
-                  Renaming card types to higher values or custom themes (like "Emerald" or "Titanium") can increase the tactical excitement for your Legends. Note that these changes will apply to **all new matches** started after you click Update.
+                  The game uses exactly one card type per player — 5 players need 5 types, 6 need 6, and so on. Use <strong>Add Card Type</strong> to create more types before starting a larger match. Changes apply to all new matches started after saving.
               </p>
           </footer>
         </div>

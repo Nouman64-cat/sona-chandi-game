@@ -1,7 +1,8 @@
+import string
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select, text
+from sqlmodel import Session, select, text, func
 from app.database.connection import get_session
-from app.models.user import User, CardTemplate, Group, Game
+from app.models.user import User, CardTemplate, CardTemplateCreate, Group, Game
 from app.routes.auth import get_current_user
 from typing import List
 
@@ -19,6 +20,48 @@ async def get_card_templates(
 ):
     statement = select(CardTemplate).order_by(CardTemplate.card_type)
     return session.exec(statement).all()
+
+@router.post("/cards", response_model=CardTemplate)
+async def create_card_template(
+    card_data: CardTemplateCreate,
+    session: Session = Depends(get_session),
+    admin: User = Depends(admin_required)
+):
+    existing = session.exec(select(CardTemplate).order_by(CardTemplate.card_type)).all()
+    used_types = {c.card_type for c in existing}
+    next_type = next((ch for ch in string.ascii_uppercase if ch not in used_types), None)
+    if not next_type:
+        raise HTTPException(status_code=400, detail="Maximum of 26 card types reached.")
+
+    new_card = CardTemplate(
+        card_type=next_type,
+        name=card_data.name,
+        value=card_data.value,
+        color=card_data.color,
+        icon=card_data.icon,
+    )
+    session.add(new_card)
+    session.commit()
+    session.refresh(new_card)
+    return new_card
+
+@router.delete("/cards/{card_id}")
+async def delete_card_template(
+    card_id: int,
+    session: Session = Depends(get_session),
+    admin: User = Depends(admin_required)
+):
+    db_card = session.get(CardTemplate, card_id)
+    if not db_card:
+        raise HTTPException(status_code=404, detail="Card template not found.")
+
+    total = session.exec(select(func.count(CardTemplate.id))).one()
+    if total <= 4:
+        raise HTTPException(status_code=400, detail="Cannot delete: minimum 4 card types required.")
+
+    session.delete(db_card)
+    session.commit()
+    return {"status": "success", "message": f"Card type '{db_card.card_type}' removed."}
 
 @router.put("/cards/{card_id}", response_model=CardTemplate)
 async def update_card_template(
