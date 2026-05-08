@@ -308,6 +308,8 @@ export default function GroupsScreen() {
   const isOwner = selectedGroup && currentUserId && Number(selectedGroup.creator_id) === Number(currentUserId);
   const memberIds = new Set(groupMembers.map((m: any) => m.id));
   const addableFriends = friends.filter((f) => !memberIds.has(f.id));
+  const currentUserMembership = groupMembers.find((m: any) => Number(m.id) === Number(currentUserId));
+  const isFullSquadReady = groupMembers.length > 0 && groupMembers.every((m: any) => m.is_ready);
 
   if (loading) return <LoadingScreen message="Loading squads..." />;
 
@@ -573,22 +575,37 @@ export default function GroupsScreen() {
               {/* Arena Actions */}
               {!activeGameId && (
                 <View style={styles.arenaActions}>
-                  {isOwner ? (
-                    <GoldButton
-                      onPress={handleStartGame}
-                      loading={startingGame}
-                      leftIcon={<MaterialCommunityIcons name="sword-cross" size={18} color="#000" />}
-                    >
-                      Start Match
-                    </GoldButton>
-                  ) : (
-                    <GoldButton
-                      onPress={() => setReadyStatus(true)}
-                      variant="outline"
-                      leftIcon={<Ionicons name="checkmark-circle" size={18} color={Colors.textPrimary} />}
-                    >
-                      Mark Ready
-                    </GoldButton>
+                  {/* Join / Leave Arena toggle — all members including owner */}
+                  <GoldButton
+                    onPress={() => setReadyStatus(!currentUserMembership?.is_ready)}
+                    variant={currentUserMembership?.is_ready ? 'danger' : 'gold'}
+                    leftIcon={
+                      currentUserMembership?.is_ready
+                        ? <Ionicons name="close-circle" size={18} color={Colors.error} />
+                        : <MaterialCommunityIcons name="sword-cross" size={18} color="#000" />
+                    }
+                  >
+                    {currentUserMembership?.is_ready ? 'Leave Arena' : 'Join Arena'}
+                  </GoldButton>
+
+                  {/* Start Match — owner only, enabled when ALL members are ready */}
+                  {isOwner && (
+                    <View style={{ marginTop: 10 }}>
+                      <GoldButton
+                        onPress={handleStartGame}
+                        loading={startingGame}
+                        disabled={!isFullSquadReady}
+                        variant="outline"
+                        leftIcon={<MaterialCommunityIcons name="play-circle" size={18} color={isFullSquadReady ? Colors.textPrimary : Colors.textSecondary} />}
+                      >
+                        Start Match
+                      </GoldButton>
+                      {!isFullSquadReady && (
+                        <Text style={styles.waitingText}>
+                          Waiting for all members to join arena...
+                        </Text>
+                      )}
+                    </View>
                   )}
                 </View>
               )}
@@ -892,7 +909,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  arenaActions: { marginBottom: Spacing.xl },
+  arenaActions: { marginBottom: Spacing.xl, gap: 0 },
+  waitingText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.gold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    textAlign: 'center',
+    marginTop: 8,
+    opacity: 0.7,
+  },
 
   dangerZone: { marginTop: Spacing.md, marginBottom: Spacing.xl },
   dangerBtn: {
