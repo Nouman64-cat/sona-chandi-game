@@ -1,40 +1,66 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { Colors, Spacing, Typography, Radius } from '../theme';
-import GlassCard from '../components/GlassCard';
-
-type Nav = NativeStackNavigationProp<RootStackParamList>;
-
-const stats = [
-  { label: 'Total Friends', value: '—', icon: 'people' as const, color: Colors.gold },
-  { label: 'Active Groups', value: '—', icon: 'shield' as const, color: Colors.silver },
-  { label: 'Win Rate', value: '—', icon: 'trending-up' as const, color: '#22c55e' },
-  { label: 'Rank', value: '—', icon: 'trophy' as const, color: Colors.gold },
-];
-
-const activities = [
-  'New protocol initialized in Phoenix Squad',
-  'Battle completed in Dragon Legion',
-  'New alliance member joined your squad',
-];
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 export default function DashboardScreen() {
   const { user } = useAuth();
-  const { accentColor } = useTheme();
-  const navigation = useNavigation<Nav>();
+  const navigation = useNavigation<any>();
+
+  const [stats, setStats] = useState({
+    friends: '—',
+    groups: '—',
+    wins: '—',
+    matches: '—',
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchStats();
+  }, [user]);
+
+  const fetchStats = async () => {
+    try {
+      const [friendsRes, groupsRes, historyRes] = await Promise.all([
+        api.get(`/friends/${user!.id}`),
+        api.get('/groups/'),
+        api.get('/games/history/user').catch(() => ({ data: [] })),
+      ]);
+      const matches: any[] = historyRes.data;
+      const wins = matches.filter((m) => m.my_best_position === 1).length;
+      setStats({
+        friends: String(friendsRes.data.length),
+        groups: String(groupsRes.data.length),
+        wins: String(wins),
+        matches: String(matches.length),
+      });
+    } catch {
+      // stats stay as '—'
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  const statCards = [
+    { label: 'Allies', value: stats.friends, icon: 'people' as const, color: Colors.gold },
+    { label: 'Squads', value: stats.groups, icon: 'shield' as const, color: '#60a5fa' },
+    { label: 'Victories', value: stats.wins, icon: 'trophy' as const, color: '#fbbf24' },
+    { label: 'Battles', value: stats.matches, icon: 'flash' as const, color: Colors.silver },
+  ];
+
+  const firstName = user?.full_name?.split(' ')[0] || 'Legend';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -42,102 +68,126 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[styles.eyebrow, { color: Colors.gold }]}>
-            Commander Dashboard
+        {/* Hero */}
+        <View style={styles.hero}>
+          <View style={styles.heroGlowA} />
+          <View style={styles.heroGlowB} />
+          <Text style={styles.eyebrow}>Commander Dashboard</Text>
+          <Text style={styles.heroTitle}>
+            Welcome back,{'\n'}
+            <Text style={styles.heroName}>{firstName}</Text>
           </Text>
-          <Text style={styles.title}>
-            Welcome back,{' '}
-            <Text style={{ color: Colors.silver }}>
-              {user?.full_name?.split(' ')[0] || 'Legend'}
-            </Text>
+          <Text style={styles.heroSub}>
+            {user?.is_admin ? 'Commander · Administrator' : 'Elite Player'}
           </Text>
         </View>
 
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          {stats.map((s, i) => (
-            <GlassCard key={s.label} style={styles.statCard} padding={Spacing.xl}>
-              <View style={[styles.statIcon, { backgroundColor: `${s.color}20` }]}>
-                <Ionicons name={s.icon} size={22} color={s.color} />
+        {/* Stats row */}
+        <View style={styles.statsRow}>
+          {statCards.map((s) => (
+            <View key={s.label} style={styles.statCard}>
+              <View style={[styles.statIconBox, { backgroundColor: `${s.color}18` }]}>
+                <Ionicons name={s.icon} size={20} color={s.color} />
               </View>
-              <Text style={styles.statValue}>{s.value}</Text>
+              {loadingStats ? (
+                <ActivityIndicator size="small" color={s.color} style={{ marginVertical: 4 }} />
+              ) : (
+                <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
+              )}
               <Text style={styles.statLabel}>{s.label}</Text>
-            </GlassCard>
+            </View>
           ))}
         </View>
 
-        {/* Recent Activity */}
-        <GlassCard style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <View style={styles.activityList}>
-            {activities.map((a, i) => (
-              <View key={i} style={styles.activityItem}>
-                <View style={styles.activityIconBox}>
-                  <Ionicons name="sparkles" size={16} color={Colors.gold} />
-                </View>
-                <View style={styles.activityContent}>
-                  <Text style={styles.activityText}>
-                    {a.includes('Phoenix Squad') ? (
-                      <>
-                        New protocol initialized in{' '}
-                        <Text style={{ color: Colors.gold }}>Phoenix Squad</Text>
-                      </>
-                    ) : (
-                      a
-                    )}
-                  </Text>
-                  <Text style={styles.activityTime}>2 hours ago</Text>
-                </View>
-              </View>
-            ))}
+        {/* Enter Arena CTA */}
+        <TouchableOpacity
+          style={styles.arenaCta}
+          onPress={() => navigation.navigate('Groups')}
+          activeOpacity={0.85}
+        >
+          <View style={styles.arenaCtaGlow} />
+          <View style={styles.arenaCtaContent}>
+            <MaterialCommunityIcons name="sword-cross" size={28} color="#000" />
+            <View style={styles.arenaCtaText}>
+              <Text style={styles.arenaCtaTitle}>Enter the Arena</Text>
+              <Text style={styles.arenaCtaSub}>Open your squads to join a live match</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="rgba(0,0,0,0.5)" />
           </View>
-        </GlassCard>
+        </TouchableOpacity>
 
         {/* Quick Actions */}
-        <GlassCard style={styles.section}>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionList}>
+          <View style={styles.actionGrid}>
             <TouchableOpacity
-              style={styles.primaryAction}
-              onPress={() => navigation.navigate('Main')}
-              activeOpacity={0.85}
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('Groups')}
+              activeOpacity={0.8}
             >
-              <MaterialCommunityIcons name="sword-cross" size={20} color="#000" />
-              <Text style={styles.primaryActionText}>Enter Live Arena</Text>
-              <Ionicons name="sparkles" size={16} color="#000" style={{ marginLeft: 'auto' }} />
+              <View style={[styles.actionIconBox, { backgroundColor: 'rgba(212,175,55,0.12)' }]}>
+                <Ionicons name="shield" size={22} color={Colors.gold} />
+              </View>
+              <Text style={styles.actionLabel}>Squads</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.secondaryAction} activeOpacity={0.7}>
-              <Ionicons name="shield" size={20} color={Colors.textSecondary} />
-              <Text style={styles.secondaryActionText}>Create New Group</Text>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('Search')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.actionIconBox, { backgroundColor: 'rgba(96,165,250,0.12)' }]}>
+                <Ionicons name="search" size={22} color="#60a5fa" />
+              </View>
+              <Text style={styles.actionLabel}>Find Players</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.secondaryAction} activeOpacity={0.7}>
-              <Ionicons name="people" size={20} color={Colors.textSecondary} />
-              <Text style={styles.secondaryActionText}>Find More Friends</Text>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('Friends')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.actionIconBox, { backgroundColor: 'rgba(34,197,94,0.12)' }]}>
+                <Ionicons name="people" size={22} color="#22c55e" />
+              </View>
+              <Text style={styles.actionLabel}>Alliance</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('History')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.actionIconBox, { backgroundColor: 'rgba(192,192,192,0.12)' }]}>
+                <Ionicons name="book" size={22} color={Colors.silver} />
+              </View>
+              <Text style={styles.actionLabel}>Archives</Text>
             </TouchableOpacity>
           </View>
-        </GlassCard>
+        </View>
 
         {/* Admin quick links */}
         {user?.is_admin && (
-          <View style={styles.adminRow}>
-            <TouchableOpacity
-              style={styles.adminButton}
-              onPress={() => navigation.navigate('AdminCards')}
-            >
-              <Ionicons name="settings" size={18} color={Colors.gold} />
-              <Text style={styles.adminButtonText}>Intelligence Dashboard</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.adminButton}
-              onPress={() => navigation.navigate('AdminUsers')}
-            >
-              <Ionicons name="people" size={18} color={Colors.gold} />
-              <Text style={styles.adminButtonText}>User Oversight</Text>
-            </TouchableOpacity>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Administration</Text>
+            <View style={styles.adminRow}>
+              <TouchableOpacity
+                style={styles.adminCard}
+                onPress={() => navigation.navigate('AdminCards')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="settings" size={18} color={Colors.gold} />
+                <Text style={styles.adminCardLabel}>Card Management</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.adminCard}
+                onPress={() => navigation.navigate('AdminUsers')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="people" size={18} color={Colors.gold} />
+                <Text style={styles.adminCardLabel}>User Oversight</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -147,122 +197,191 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: { padding: Spacing['2xl'], paddingBottom: Spacing['5xl'], gap: Spacing['2xl'] },
-  header: { paddingTop: Spacing.md },
+  scroll: { paddingBottom: 40 },
+
+  // Hero
+  hero: {
+    padding: Spacing['2xl'],
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing['3xl'],
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  heroGlowA: {
+    position: 'absolute',
+    top: -60,
+    right: -40,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(212,175,55,0.06)',
+  },
+  heroGlowB: {
+    position: 'absolute',
+    bottom: -40,
+    left: -60,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(192,192,192,0.04)',
+  },
   eyebrow: {
     fontSize: 10,
     fontWeight: '900',
     textTransform: 'uppercase',
-    letterSpacing: 6,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: Typography['3xl'],
-    fontWeight: '900',
-    color: Colors.textPrimary,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.md,
-  },
-  statCard: {
-    width: '47%',
-    alignItems: 'center',
-  },
-  statIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
+    letterSpacing: 5,
+    color: Colors.gold,
     marginBottom: 12,
   },
-  statValue: {
-    fontSize: Typography['2xl'],
+  heroTitle: {
+    fontSize: 32,
     fontWeight: '900',
     color: Colors.textPrimary,
-    marginBottom: 4,
+    lineHeight: 38,
+  },
+  heroName: {
+    color: Colors.silver,
+  },
+  heroSub: {
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
+    marginTop: 10,
+    fontWeight: '600',
+  },
+
+  // Stats
+  statsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing['2xl'],
+    gap: 10,
+    marginBottom: Spacing['2xl'],
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 18,
+    padding: 12,
+    alignItems: 'center',
+    gap: 6,
+  },
+  statIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statValue: {
+    fontSize: Typography.xl,
+    fontWeight: '900',
   },
   statLabel: {
     fontSize: 9,
     fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     color: Colors.textSecondary,
     textAlign: 'center',
   },
-  section: { gap: 0 },
-  sectionTitle: {
-    fontSize: Typography.lg,
-    fontWeight: '900',
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xl,
+
+  // Arena CTA
+  arenaCta: {
+    marginHorizontal: Spacing['2xl'],
+    marginBottom: Spacing['2xl'],
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: Colors.gold,
   },
-  activityList: { gap: Spacing.md },
-  activityItem: {
+  arenaCtaGlow: {
+    position: 'absolute',
+    top: -30,
+    right: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  arenaCtaContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    backgroundColor: Colors.white5,
-    borderRadius: Radius.xl,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.white5,
+    padding: Spacing['2xl'],
+    gap: Spacing.lg,
   },
-  activityIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.goldLight,
+  arenaCtaText: { flex: 1 },
+  arenaCtaTitle: {
+    fontSize: Typography.lg,
+    fontWeight: '900',
+    color: '#000',
+  },
+  arenaCtaSub: {
+    fontSize: 11,
+    color: 'rgba(0,0,0,0.55)',
+    marginTop: 2,
+    fontWeight: '600',
+  },
+
+  // Sections
+  section: {
+    paddingHorizontal: Spacing['2xl'],
+    marginBottom: Spacing['2xl'],
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 3,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.lg,
+  },
+
+  // Action Grid
+  actionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  actionCard: {
+    width: '47%',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 18,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    gap: 10,
+  },
+  actionIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  activityContent: { flex: 1 },
-  activityText: { fontSize: Typography.sm, color: Colors.textPrimary, fontWeight: '600' },
-  activityTime: { fontSize: 11, color: Colors.textSecondary, marginTop: 2 },
-  actionList: { gap: Spacing.md },
-  primaryAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    backgroundColor: Colors.gold,
-    borderRadius: Radius['2xl'],
-    padding: Spacing.lg,
-    shadowColor: Colors.gold,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
+  actionLabel: {
+    fontSize: Typography.sm,
+    fontWeight: '700',
+    color: Colors.textPrimary,
   },
-  primaryActionText: { fontSize: Typography.base, fontWeight: '900', color: '#000' },
-  secondaryAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.borderPrimary,
-    borderRadius: Radius['2xl'],
-    padding: Spacing.lg,
-  },
-  secondaryActionText: { fontSize: Typography.base, fontWeight: '700', color: Colors.textPrimary },
-  adminRow: { flexDirection: 'row', gap: Spacing.md },
-  adminButton: {
+
+  // Admin
+  adminRow: { flexDirection: 'row', gap: 10 },
+  adminCard: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: Colors.goldLight,
+    backgroundColor: 'rgba(212,175,55,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.2)',
-    borderRadius: Radius.xl,
-    padding: Spacing.md,
+    borderColor: 'rgba(212,175,55,0.15)',
+    borderRadius: 14,
+    padding: Spacing.lg,
     justifyContent: 'center',
   },
-  adminButtonText: {
-    fontSize: 11,
+  adminCardLabel: {
+    fontSize: 12,
     fontWeight: '800',
     color: Colors.gold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
 });

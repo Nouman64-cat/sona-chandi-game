@@ -23,9 +23,7 @@ export default function SearchScreen() {
   const [addingId, setAddingId] = useState<number | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    performSearch('');
-  }, []);
+  useEffect(() => { performSearch(''); }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -58,9 +56,7 @@ export default function SearchScreen() {
       if (!token) return;
       const payload = decodeJwtPayload(token);
       await api.post(`/friends/${payload.sub}/add/${friendId}`);
-      setResults((r) =>
-        r.map((u) => (u.id === friendId ? { ...u, is_pending: true } : u))
-      );
+      setResults((r) => r.map((u) => (u.id === friendId ? { ...u, is_pending: true } : u)));
     } catch (err) {
       console.error(err);
     } finally {
@@ -75,45 +71,34 @@ export default function SearchScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>
-            Find <Text style={{ color: Colors.gold }}>Legends</Text>
+            Find <Text style={{ color: Colors.gold }}>Players</Text>
           </Text>
-          <Text style={styles.subtitle}>
-            Search for players by name or username.
-          </Text>
+          <Text style={styles.subtitle}>Search by name or username.</Text>
         </View>
 
         {/* Search bar */}
         <View style={styles.searchBar}>
-          <Ionicons name="search" size={22} color={Colors.textSecondary} style={styles.searchIcon} />
+          <Ionicons name="search" size={20} color={Colors.textSecondary} />
           <TextInput
             style={styles.searchInput}
             value={query}
             onChangeText={setQuery}
-            placeholder="Search username or name..."
+            placeholder="Search players..."
             placeholderTextColor={Colors.textSecondary}
             autoCapitalize="none"
             autoCorrect={false}
           />
-          {loading && (
-            <ActivityIndicator
-              size="small"
-              color={Colors.gold}
-              style={styles.searchLoader}
-            />
-          )}
+          {loading && <ActivityIndicator size="small" color={Colors.gold} />}
         </View>
 
-        {/* Section label */}
-        <View style={styles.sectionRow}>
-          <Ionicons
-            name={query ? 'search' : 'sparkles'}
-            size={16}
-            color={Colors.gold}
-          />
-          <Text style={styles.sectionLabel}>
-            {query ? 'Search Results' : 'Recommended Legends'}
+        {/* Label */}
+        <View style={styles.labelRow}>
+          <Ionicons name={query ? 'search-outline' : 'sparkles-outline'} size={14} color={Colors.textSecondary} />
+          <Text style={styles.labelText}>
+            {query ? 'Search Results' : 'Suggested Players'}
           </Text>
         </View>
 
@@ -124,9 +109,8 @@ export default function SearchScreen() {
               <AvatarImage
                 uri={user.profile_picture_url}
                 name={user.username}
-                size={48}
-                borderRadius={12}
-                style={user.is_self ? { backgroundColor: Colors.goldLight } : undefined}
+                size={50}
+                borderRadius={14}
               />
               <View style={styles.cardInfo}>
                 <View style={styles.nameRow}>
@@ -142,27 +126,23 @@ export default function SearchScreen() {
 
               {!user.is_self && (
                 <TouchableOpacity
-                  onPress={() =>
-                    !user.is_friend && !user.is_pending && addFriend(user.id)
-                  }
+                  onPress={() => !user.is_friend && !user.is_pending && addFriend(user.id)}
                   disabled={addingId === user.id || user.is_friend || user.is_pending}
                   style={[
                     styles.actionBtn,
-                    user.is_friend
-                      ? styles.actionBtnFriend
-                      : user.is_pending
-                      ? styles.actionBtnPending
-                      : styles.actionBtnAdd,
+                    user.is_friend && styles.actionBtnFriend,
+                    user.is_pending && styles.actionBtnPending,
+                    !user.is_friend && !user.is_pending && styles.actionBtnAdd,
                   ]}
                 >
                   {addingId === user.id ? (
                     <ActivityIndicator size="small" color={Colors.gold} />
                   ) : user.is_friend ? (
-                    <Ionicons name="checkmark" size={20} color="#22c55e" />
+                    <Ionicons name="checkmark" size={18} color="#22c55e" />
                   ) : user.is_pending ? (
                     <Text style={styles.pendingText}>Sent</Text>
                   ) : (
-                    <Ionicons name="person-add" size={20} color={Colors.gold} />
+                    <Ionicons name="person-add-outline" size={18} color={Colors.gold} />
                   )}
                 </TouchableOpacity>
               )}
@@ -170,12 +150,11 @@ export default function SearchScreen() {
           ))}
         </View>
 
-        {!loading && results.length === 0 && query && (
+        {!loading && results.length === 0 && query.length > 0 && (
           <View style={styles.empty}>
-            <Ionicons name="search" size={48} color={Colors.textSecondary} style={{ opacity: 0.3 }} />
-            <Text style={styles.emptyText}>
-              No legends found matching "{query}"
-            </Text>
+            <Ionicons name="search-outline" size={44} color={Colors.textSecondary} style={{ opacity: 0.3 }} />
+            <Text style={styles.emptyTitle}>No players found</Text>
+            <Text style={styles.emptyText}>Try a different name or username.</Text>
           </View>
         )}
       </ScrollView>
@@ -185,69 +164,81 @@ export default function SearchScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: { padding: Spacing['2xl'], gap: Spacing['2xl'], paddingBottom: Spacing['5xl'] },
+  scroll: { padding: Spacing['2xl'], gap: Spacing['2xl'], paddingBottom: 48 },
+
   header: {},
   title: { fontSize: Typography['3xl'], fontWeight: '900', color: Colors.textPrimary },
   subtitle: { fontSize: Typography.sm, color: Colors.textSecondary, marginTop: 6 },
+
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white5,
+    gap: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: Colors.borderPrimary,
-    borderRadius: Radius['3xl'],
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 18,
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
+    paddingVertical: 14,
   },
-  searchIcon: { marginRight: Spacing.md },
   searchInput: {
     flex: 1,
-    fontSize: Typography.lg,
+    fontSize: Typography.base,
     color: Colors.textPrimary,
     fontWeight: '500',
   },
-  searchLoader: { marginLeft: Spacing.md },
-  sectionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionLabel: {
-    fontSize: 11,
+
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: -6,
+  },
+  labelText: {
+    fontSize: 10,
     fontWeight: '900',
     textTransform: 'uppercase',
     letterSpacing: 3,
     color: Colors.textSecondary,
   },
-  list: { gap: Spacing.md },
+
+  list: { gap: 10 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.glass,
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
-    borderColor: Colors.glassBorder,
-    borderRadius: Radius['2xl'],
-    padding: Spacing.xl,
+    borderColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 18,
+    padding: Spacing.lg,
     gap: Spacing.md,
   },
   cardInfo: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   cardName: { fontSize: Typography.base, fontWeight: '700', color: Colors.textPrimary },
   cardUsername: { fontSize: Typography.sm, color: Colors.textSecondary, marginTop: 2 },
+
   selfBadge: {
-    backgroundColor: Colors.goldLight,
+    backgroundColor: 'rgba(212,175,55,0.12)',
     borderRadius: 6,
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 2,
   },
-  selfBadgeText: { fontSize: 10, fontWeight: '800', color: Colors.gold, textTransform: 'uppercase', letterSpacing: 1 },
+  selfBadgeText: { fontSize: 9, fontWeight: '800', color: Colors.gold, textTransform: 'uppercase', letterSpacing: 1 },
+
   actionBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.xl,
+    width: 42,
+    height: 42,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionBtnAdd: { backgroundColor: Colors.white10 },
+  actionBtnAdd: { backgroundColor: 'rgba(212,175,55,0.1)' },
   actionBtnFriend: { backgroundColor: 'rgba(34,197,94,0.1)' },
-  actionBtnPending: { backgroundColor: Colors.goldLight, paddingHorizontal: 12, width: 'auto' },
-  pendingText: { fontSize: 11, fontWeight: '700', color: Colors.goldDim },
-  empty: { alignItems: 'center', paddingVertical: Spacing['5xl'], gap: 12 },
-  emptyText: { fontSize: Typography.base, color: Colors.textSecondary, fontWeight: '500' },
+  actionBtnPending: { backgroundColor: 'rgba(212,175,55,0.08)', width: 'auto', paddingHorizontal: 12 },
+  pendingText: { fontSize: 11, fontWeight: '700', color: Colors.gold },
+
+  empty: { alignItems: 'center', paddingVertical: 48, gap: 12 },
+  emptyTitle: { fontSize: Typography.lg, fontWeight: '800', color: Colors.textPrimary },
+  emptyText: { fontSize: Typography.sm, color: Colors.textSecondary, textAlign: 'center' },
 });

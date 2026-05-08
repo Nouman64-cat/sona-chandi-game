@@ -15,44 +15,36 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import api from '../services/api';
 import { decodeJwtPayload } from '../utils/jwt';
 import { Colors, Spacing, Typography, Radius } from '../theme';
-import { RootStackParamList } from '../navigation/types';
 import AvatarImage from '../components/AvatarImage';
-import GlassCard from '../components/GlassCard';
 import GoldButton from '../components/GoldButton';
 import LoadingScreen from '../components/LoadingScreen';
 
-type Nav = NativeStackNavigationProp<RootStackParamList>;
-
 export default function GroupsScreen() {
-  const navigation = useNavigation<Nav>();
+  const navigation = useNavigation<any>();
   const [groups, setGroups] = useState<any[]>([]);
+  const [liveGroupIds, setLiveGroupIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [friends, setFriends] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
-  // Create modal
   const [showCreate, setShowCreate] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
   const [creating, setCreating] = useState(false);
 
-  // Join by code
   const [showJoin, setShowJoin] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [joining, setJoining] = useState(false);
 
-  // Selected group modal
   const [selectedGroup, setSelectedGroup] = useState<any | null>(null);
   const [groupMembers, setGroupMembers] = useState<any[]>([]);
   const [activeGameId, setActiveGameId] = useState<number | null>(null);
   const [startingGame, setStartingGame] = useState(false);
   const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const ignoredGameIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     init();
@@ -80,7 +72,19 @@ export default function GroupsScreen() {
   const fetchGroups = async () => {
     try {
       const res = await api.get('/groups/');
-      setGroups(res.data);
+      const fetched: any[] = res.data;
+      setGroups(fetched);
+      // Check which groups have live games
+      const liveChecks = await Promise.allSettled(
+        fetched.map((g) => api.get(`/games/state/${g.id}`))
+      );
+      const liveIds = new Set<number>();
+      liveChecks.forEach((result, idx) => {
+        if (result.status === 'fulfilled' && result.value.data?.status === 'active') {
+          liveIds.add(fetched[idx].id);
+        }
+      });
+      setLiveGroupIds(liveIds);
     } catch (err) {
       console.error(err);
     } finally {
@@ -108,12 +112,18 @@ export default function GroupsScreen() {
         api.get(`/games/state/${groupId}?t=${ts}`),
       ]);
       setGroupMembers(membersRes.data);
-      if (gameRes.data?.status === 'active') {
-        if (gameRes.data.game_id !== ignoredGameIdRef.current) {
-          setActiveGameId(gameRes.data.game_id);
-        }
+      const isActive = gameRes.data?.status === 'active';
+      if (isActive) {
+        const gid = gameRes.data.game_id;
+        setActiveGameId(gid);
+        setLiveGroupIds((prev) => new Set([...prev, groupId]));
       } else {
         setActiveGameId(null);
+        setLiveGroupIds((prev) => {
+          const next = new Set(prev);
+          next.delete(groupId);
+          return next;
+        });
       }
     } catch (err) {
       console.error(err);
@@ -179,6 +189,15 @@ export default function GroupsScreen() {
     try {
       await api.post(`/games/start/${selectedGroup.id}?requestor_id=${currentUserId}`);
       await refreshGroupData(selectedGroup.id);
+      // Auto-enter the arena after starting
+      setTimeout(() => {
+        setSelectedGroup(null);
+        navigation.navigate('GameArena', {
+          groupId: selectedGroup.id,
+          currentUserId,
+          groupMembers,
+        });
+      }, 400);
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.detail || 'Failed to start match.');
     } finally {
@@ -188,17 +207,23 @@ export default function GroupsScreen() {
 
   const handleEnterArena = () => {
     if (!selectedGroup || !currentUserId) return;
-    navigation.navigate('GameArena', {
-      groupId: selectedGroup.id,
-      currentUserId,
-      groupMembers,
-    });
+    const gid = selectedGroup.id;
+    const uid = currentUserId;
+    const members = groupMembers;
     setSelectedGroup(null);
+    // Small delay to let modal close before navigating
+    setTimeout(() => {
+      navigation.navigate('GameArena', {
+        groupId: gid,
+        currentUserId: uid,
+        groupMembers: members,
+      });
+    }, 200);
   };
 
   const handleLeaveGroup = async () => {
     if (!selectedGroup || !currentUserId) return;
-    Alert.alert('Leave Group', `Are you sure you want to leave ${selectedGroup.name}?`, [
+    Alert.alert('Leave Squad', `Leave ${selectedGroup.name}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Leave',
@@ -218,7 +243,7 @@ export default function GroupsScreen() {
 
   const handleDeleteGroup = async () => {
     if (!selectedGroup) return;
-    Alert.alert('Delete Group', `Permanently delete ${selectedGroup.name}?`, [
+    Alert.alert('Delete Squad', `Permanently delete ${selectedGroup.name}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -246,24 +271,20 @@ export default function GroupsScreen() {
   };
 
   const handleRefreshBeacon = async () => {
-    Alert.alert(
-      'Recalibrate Beacon',
-      'This will invalidate all existing invite links. Proceed?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Recalibrate',
-          onPress: async () => {
-            try {
-              const res = await api.post(`/groups/${selectedGroup.id}/beacon/refresh`);
-              setSelectedGroup((g: any) => ({ ...g, invite_code: res.data.invite_code }));
-            } catch (err: any) {
-              Alert.alert('Error', err.response?.data?.detail || 'Failed to refresh beacon.');
-            }
-          },
+    Alert.alert('Recalibrate Beacon', 'Invalidate all existing invite links?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Recalibrate',
+        onPress: async () => {
+          try {
+            const res = await api.post(`/groups/${selectedGroup.id}/beacon/refresh`);
+            setSelectedGroup((g: any) => ({ ...g, invite_code: res.data.invite_code }));
+          } catch (err: any) {
+            Alert.alert('Error', err.response?.data?.detail || 'Failed to refresh beacon.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const copyInviteCode = () => {
@@ -289,81 +310,108 @@ export default function GroupsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>
-            Squad <Text style={{ color: Colors.gold }}>Management</Text>
+            Your <Text style={{ color: Colors.gold }}>Squads</Text>
           </Text>
-          <Text style={styles.subtitle}>Manage your squads and launch matches.</Text>
+          <Text style={styles.subtitle}>Manage teams and enter live matches.</Text>
         </View>
 
         {/* Action buttons */}
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowCreate(true)}>
-            <Ionicons name="add" size={20} color={Colors.gold} />
-            <Text style={styles.actionBtnText}>Create</Text>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowCreate(true)} activeOpacity={0.8}>
+            <Ionicons name="add-circle" size={20} color={Colors.gold} />
+            <Text style={styles.actionBtnText}>New Squad</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowJoin(true)}>
-            <Ionicons name="enter" size={20} color={Colors.gold} />
-            <Text style={styles.actionBtnText}>Join by Code</Text>
+          <TouchableOpacity style={styles.actionBtnOutline} onPress={() => setShowJoin(true)} activeOpacity={0.8}>
+            <Ionicons name="enter-outline" size={20} color={Colors.textPrimary} />
+            <Text style={styles.actionBtnOutlineText}>Join by Code</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Live game banner */}
+        {liveGroupIds.size > 0 && (
+          <View style={styles.liveBanner}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveBannerText}>
+              {liveGroupIds.size === 1 ? '1 squad' : `${liveGroupIds.size} squads`} with a live match — tap to join!
+            </Text>
+          </View>
+        )}
 
         {/* Groups list */}
         {groups.length === 0 ? (
           <View style={styles.empty}>
-            <Ionicons name="shield" size={48} color={Colors.textSecondary} style={{ opacity: 0.2 }} />
-            <Text style={styles.emptyText}>No squads yet. Create or join one!</Text>
+            <View style={styles.emptyIcon}>
+              <Ionicons name="shield-outline" size={40} color={Colors.textSecondary} style={{ opacity: 0.3 }} />
+            </View>
+            <Text style={styles.emptyTitle}>No squads yet</Text>
+            <Text style={styles.emptyText}>Create a squad or join one with an invite code.</Text>
           </View>
         ) : (
           <View style={styles.list}>
-            {groups.map((g) => (
-              <TouchableOpacity
-                key={g.id}
-                style={styles.groupCard}
-                onPress={() => selectGroup(g)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.groupIconBox}>
-                  <Ionicons name="shield" size={24} color={Colors.gold} />
-                </View>
-                <View style={styles.groupInfo}>
-                  <Text style={styles.groupName}>{g.name}</Text>
-                  {g.description ? (
-                    <Text style={styles.groupDesc} numberOfLines={1}>{g.description}</Text>
-                  ) : null}
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
-              </TouchableOpacity>
-            ))}
+            {groups.map((g) => {
+              const isLive = liveGroupIds.has(g.id);
+              return (
+                <TouchableOpacity
+                  key={g.id}
+                  style={[styles.groupCard, isLive && styles.groupCardLive]}
+                  onPress={() => selectGroup(g)}
+                  activeOpacity={0.8}
+                >
+                  {isLive && <View style={styles.cardGlow} />}
+                  <View style={[styles.groupIconBox, isLive && styles.groupIconBoxLive]}>
+                    {isLive
+                      ? <MaterialCommunityIcons name="sword-cross" size={22} color="#000" />
+                      : <Ionicons name="shield" size={22} color={Colors.gold} />
+                    }
+                  </View>
+                  <View style={styles.groupInfo}>
+                    <View style={styles.groupNameRow}>
+                      <Text style={styles.groupName}>{g.name}</Text>
+                      {isLive && (
+                        <View style={styles.livePill}>
+                          <View style={styles.livePillDot} />
+                          <Text style={styles.livePillText}>LIVE</Text>
+                        </View>
+                      )}
+                    </View>
+                    {g.description ? (
+                      <Text style={styles.groupDesc} numberOfLines={1}>{g.description}</Text>
+                    ) : null}
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
       </ScrollView>
 
       {/* Create Group Modal */}
       <Modal visible={showCreate} transparent animationType="slide" onRequestClose={() => setShowCreate(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Create Squad</Text>
-              <TouchableOpacity onPress={() => setShowCreate(false)}>
-                <Ionicons name="close" size={24} color={Colors.textSecondary} />
+        <View style={styles.overlay}>
+          <View style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Create Squad</Text>
+              <TouchableOpacity onPress={() => setShowCreate(false)} style={styles.closeBtn}>
+                <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            <View style={styles.modalBody}>
+            <View style={styles.sheetBody}>
               <TextInput
-                style={styles.modalInput}
+                style={styles.input}
                 value={newGroupName}
                 onChangeText={setNewGroupName}
                 placeholder="Squad name..."
                 placeholderTextColor={Colors.textSecondary}
               />
               <TextInput
-                style={[styles.modalInput, styles.modalTextArea]}
+                style={[styles.input, styles.inputArea]}
                 value={newGroupDesc}
                 onChangeText={setNewGroupDesc}
                 placeholder="Description (optional)..."
@@ -381,22 +429,24 @@ export default function GroupsScreen() {
 
       {/* Join by Code Modal */}
       <Modal visible={showJoin} transparent animationType="slide" onRequestClose={() => setShowJoin(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Join by Invite Code</Text>
-              <TouchableOpacity onPress={() => setShowJoin(false)}>
-                <Ionicons name="close" size={24} color={Colors.textSecondary} />
+        <View style={styles.overlay}>
+          <View style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Join by Invite Code</Text>
+              <TouchableOpacity onPress={() => setShowJoin(false)} style={styles.closeBtn}>
+                <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            <View style={styles.modalBody}>
+            <View style={styles.sheetBody}>
               <TextInput
-                style={styles.modalInput}
+                style={styles.input}
                 value={inviteCode}
                 onChangeText={setInviteCode}
                 placeholder="Enter invite code..."
                 placeholderTextColor={Colors.textSecondary}
                 autoCapitalize="none"
+                autoCorrect={false}
               />
               <GoldButton onPress={handleJoinByCode} loading={joining}>
                 Join Squad
@@ -413,42 +463,73 @@ export default function GroupsScreen() {
         animationType="slide"
         onRequestClose={() => setSelectedGroup(null)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modal, styles.groupDetailModal]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selectedGroup?.name}</Text>
-              <TouchableOpacity onPress={() => setSelectedGroup(null)}>
-                <Ionicons name="close" size={24} color={Colors.textSecondary} />
+        <View style={styles.overlay}>
+          <View style={[styles.sheet, styles.sheetTall]}>
+            <View style={styles.sheetHandle} />
+
+            {/* Header */}
+            <View style={styles.sheetHeader}>
+              <View style={styles.sheetTitleRow}>
+                <Text style={styles.sheetTitle}>{selectedGroup?.name}</Text>
+                {activeGameId && (
+                  <View style={styles.livePill}>
+                    <View style={styles.livePillDot} />
+                    <Text style={styles.livePillText}>LIVE</Text>
+                  </View>
+                )}
+              </View>
+              <TouchableOpacity onPress={() => setSelectedGroup(null)} style={styles.closeBtn}>
+                <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+
+              {/* Enter Arena CTA — most prominent when live */}
+              {activeGameId ? (
+                <TouchableOpacity style={styles.enterArenaBanner} onPress={handleEnterArena} activeOpacity={0.85}>
+                  <View style={styles.enterArenaBannerGlow} />
+                  <MaterialCommunityIcons name="sword-cross" size={26} color="#000" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.enterArenaTitle}>Match is Live!</Text>
+                    <Text style={styles.enterArenaSub}>Tap to enter the arena now</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="rgba(0,0,0,0.5)" />
+                </TouchableOpacity>
+              ) : null}
+
               {/* Invite code */}
               <View style={styles.inviteRow}>
-                <View style={styles.inviteCodeBox}>
-                  <Text style={styles.inviteCodeLabel}>Invite Code</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.inviteLabel}>Invite Code</Text>
                   <Text style={styles.inviteCode}>{selectedGroup?.invite_code}</Text>
                 </View>
-                <TouchableOpacity style={styles.copyBtn} onPress={copyInviteCode}>
-                  <Ionicons name={copied ? 'checkmark' : 'copy'} size={20} color={Colors.gold} />
+                <TouchableOpacity style={styles.iconBtn} onPress={copyInviteCode}>
+                  <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={18} color={copied ? Colors.success : Colors.gold} />
                 </TouchableOpacity>
                 {isOwner && (
-                  <TouchableOpacity style={styles.copyBtn} onPress={handleRefreshBeacon}>
-                    <Ionicons name="refresh" size={20} color={Colors.textSecondary} />
+                  <TouchableOpacity style={styles.iconBtn} onPress={handleRefreshBeacon}>
+                    <Ionicons name="refresh-outline" size={18} color={Colors.textSecondary} />
                   </TouchableOpacity>
                 )}
               </View>
 
               {/* Members */}
-              <Text style={styles.memberTitle}>Members</Text>
+              <Text style={styles.sectionLabel}>Members</Text>
               <View style={styles.memberList}>
-                {groupMembers.map((m: any) => {
-                  const isOnline = m.is_ready !== undefined ? true : false;
-                  return (
+                {groupMembers.length === 0 ? (
+                  <ActivityIndicator color={Colors.gold} style={{ padding: 20 }} />
+                ) : (
+                  groupMembers.map((m: any) => (
                     <View key={m.id} style={styles.memberRow}>
-                      <AvatarImage uri={m.profile_picture_url} name={m.username} size={40} borderRadius={10} />
-                      <View style={styles.memberInfo}>
-                        <Text style={styles.memberName}>{m.full_name}</Text>
+                      <AvatarImage uri={m.profile_picture_url} name={m.username} size={44} borderRadius={12} />
+                      <View style={{ flex: 1 }}>
+                        <View style={styles.memberNameRow}>
+                          <Text style={styles.memberName}>{m.full_name}</Text>
+                          {Number(m.id) === Number(selectedGroup?.creator_id) && (
+                            <Ionicons name="star" size={13} color={Colors.gold} />
+                          )}
+                        </View>
                         <Text style={styles.memberUsername}>@{m.username}</Text>
                       </View>
                       {m.is_ready && (
@@ -456,31 +537,25 @@ export default function GroupsScreen() {
                           <Text style={styles.readyBadgeText}>Ready</Text>
                         </View>
                       )}
-                      {Number(m.id) === Number(selectedGroup?.creator_id) && (
-                        <Ionicons name="star" size={16} color={Colors.gold} />
-                      )}
                     </View>
-                  );
-                })}
+                  ))
+                )}
               </View>
 
               {/* Add Friends */}
               {isOwner && addableFriends.length > 0 && (
                 <>
-                  <Text style={styles.memberTitle}>Add Friends</Text>
+                  <Text style={styles.sectionLabel}>Add Friends</Text>
                   <View style={styles.memberList}>
                     {addableFriends.map((f) => (
                       <View key={f.id} style={styles.memberRow}>
-                        <AvatarImage uri={f.profile_picture_url} name={f.username} size={40} borderRadius={10} />
-                        <View style={styles.memberInfo}>
+                        <AvatarImage uri={f.profile_picture_url} name={f.username} size={44} borderRadius={12} />
+                        <View style={{ flex: 1 }}>
                           <Text style={styles.memberName}>{f.full_name}</Text>
                           <Text style={styles.memberUsername}>@{f.username}</Text>
                         </View>
-                        <TouchableOpacity
-                          style={styles.addMemberBtn}
-                          onPress={() => handleAddFriend(f.id)}
-                        >
-                          <Ionicons name="person-add" size={18} color={Colors.gold} />
+                        <TouchableOpacity style={styles.addBtn} onPress={() => handleAddFriend(f.id)}>
+                          <Ionicons name="person-add" size={16} color={Colors.gold} />
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -489,40 +564,43 @@ export default function GroupsScreen() {
               )}
 
               {/* Arena Actions */}
-              <View style={styles.arenaActions}>
-                {activeGameId ? (
-                  <GoldButton onPress={handleEnterArena}>
-                    <MaterialCommunityIcons name="sword-cross" size={18} color="#000" />
-                    {'  '}Enter Arena
-                  </GoldButton>
-                ) : isOwner ? (
-                  <GoldButton onPress={handleStartGame} loading={startingGame}>
-                    <MaterialCommunityIcons name="sword-cross" size={18} color="#000" />
-                    {'  '}Start Match
-                  </GoldButton>
-                ) : (
-                  <View style={styles.readyActions}>
-                    <GoldButton onPress={() => setReadyStatus(true)} style={{ flex: 1 }}>
+              {!activeGameId && (
+                <View style={styles.arenaActions}>
+                  {isOwner ? (
+                    <GoldButton
+                      onPress={handleStartGame}
+                      loading={startingGame}
+                      leftIcon={<MaterialCommunityIcons name="sword-cross" size={18} color="#000" />}
+                    >
+                      Start Match
+                    </GoldButton>
+                  ) : (
+                    <GoldButton
+                      onPress={() => setReadyStatus(true)}
+                      variant="outline"
+                      leftIcon={<Ionicons name="checkmark-circle" size={18} color={Colors.textPrimary} />}
+                    >
                       Mark Ready
                     </GoldButton>
-                  </View>
-                )}
-              </View>
+                  )}
+                </View>
+              )}
 
-              {/* Group management */}
-              <View style={styles.groupActions}>
+              {/* Danger zone */}
+              <View style={styles.dangerZone}>
                 {isOwner ? (
                   <TouchableOpacity style={styles.dangerBtn} onPress={handleDeleteGroup}>
-                    <Ionicons name="trash" size={18} color={Colors.error} />
-                    <Text style={styles.dangerBtnText}>Delete Group</Text>
+                    <Ionicons name="trash-outline" size={16} color={Colors.error} />
+                    <Text style={styles.dangerBtnText}>Delete Squad</Text>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity style={styles.dangerBtn} onPress={handleLeaveGroup}>
-                    <Ionicons name="log-out" size={18} color={Colors.error} />
-                    <Text style={styles.dangerBtnText}>Leave Group</Text>
+                    <Ionicons name="log-out-outline" size={16} color={Colors.error} />
+                    <Text style={styles.dangerBtnText}>Leave Squad</Text>
                   </TouchableOpacity>
                 )}
               </View>
+
             </ScrollView>
           </View>
         </View>
@@ -533,142 +611,268 @@ export default function GroupsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: { padding: Spacing['2xl'], gap: Spacing['2xl'], paddingBottom: Spacing['5xl'] },
+  scroll: { padding: Spacing['2xl'], gap: Spacing['2xl'], paddingBottom: 48 },
+
   header: {},
   title: { fontSize: Typography['3xl'], fontWeight: '900', color: Colors.textPrimary },
   subtitle: { fontSize: Typography.sm, color: Colors.textSecondary, marginTop: 6 },
-  actionRow: { flexDirection: 'row', gap: Spacing.md },
+
+  actionRow: { flexDirection: 'row', gap: 10 },
   actionBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: Colors.goldLight,
+    backgroundColor: Colors.gold,
+    borderRadius: 16,
+    paddingVertical: Spacing.lg,
+    shadowColor: Colors.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  actionBtnText: { fontSize: Typography.base, fontWeight: '800', color: '#000' },
+  actionBtnOutline: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.2)',
-    borderRadius: Radius['2xl'],
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 16,
     paddingVertical: Spacing.lg,
   },
-  actionBtnText: { fontSize: Typography.base, fontWeight: '700', color: Colors.gold },
-  list: { gap: Spacing.md },
+  actionBtnOutlineText: { fontSize: Typography.base, fontWeight: '700', color: Colors.textPrimary },
+
+  liveBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(212,175,55,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.2)',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.gold,
+  },
+  liveBannerText: { fontSize: Typography.sm, color: Colors.gold, fontWeight: '700' },
+
+  list: { gap: 10 },
   groupCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    backgroundColor: Colors.glass,
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
-    borderColor: Colors.glassBorder,
-    borderRadius: Radius['2xl'],
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 18,
     padding: Spacing.xl,
+    overflow: 'hidden',
+  },
+  groupCardLive: {
+    borderColor: 'rgba(212,175,55,0.35)',
+    backgroundColor: 'rgba(212,175,55,0.05)',
+  },
+  cardGlow: {
+    position: 'absolute',
+    top: -20,
+    right: -20,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(212,175,55,0.08)',
   },
   groupIconBox: {
     width: 48,
     height: 48,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.goldLight,
+    borderRadius: 14,
+    backgroundColor: 'rgba(212,175,55,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  groupIconBoxLive: {
+    backgroundColor: Colors.gold,
+  },
   groupInfo: { flex: 1 },
-  groupName: { fontSize: Typography.base, fontWeight: '700', color: Colors.textPrimary },
-  groupDesc: { fontSize: Typography.sm, color: Colors.textSecondary, marginTop: 2 },
-  empty: { alignItems: 'center', paddingVertical: Spacing['5xl'], gap: 12 },
-  emptyText: { fontSize: Typography.base, color: Colors.textSecondary, fontStyle: 'italic' },
-  // Modals
-  modalOverlay: {
+  groupNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  groupName: { fontSize: Typography.base, fontWeight: '800', color: Colors.textPrimary },
+  groupDesc: { fontSize: Typography.sm, color: Colors.textSecondary, marginTop: 3 },
+  livePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(212,175,55,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.4)',
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  livePillDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: Colors.gold },
+  livePillText: { fontSize: 9, fontWeight: '900', color: Colors.gold, letterSpacing: 1 },
+
+  empty: { alignItems: 'center', paddingVertical: 60, gap: 12 },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: { fontSize: Typography.lg, fontWeight: '800', color: Colors.textPrimary },
+  emptyText: { fontSize: Typography.sm, color: Colors.textSecondary, textAlign: 'center' },
+
+  // Modals / Sheets
+  overlay: {
     flex: 1,
-    backgroundColor: Colors.black80,
+    backgroundColor: 'rgba(0,0,0,0.85)',
     justifyContent: 'flex-end',
   },
-  modal: {
-    backgroundColor: Colors.backgroundSecondary,
-    borderTopLeftRadius: Radius['3xl'],
-    borderTopRightRadius: Radius['3xl'],
+  sheet: {
+    backgroundColor: '#0e0e0e',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderWidth: 1,
-    borderColor: Colors.borderPrimary,
+    borderColor: 'rgba(255,255,255,0.1)',
     paddingHorizontal: Spacing['2xl'],
-    paddingTop: Spacing['2xl'],
+    paddingTop: 12,
     paddingBottom: 48,
   },
-  groupDetailModal: { maxHeight: '90%' },
-  modalHeader: {
+  sheetTall: { maxHeight: '92%' },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing['2xl'],
   },
-  modalTitle: { fontSize: Typography.xl, fontWeight: '900', color: Colors.textPrimary },
-  modalBody: { gap: Spacing.lg },
-  modalInput: {
-    backgroundColor: Colors.backgroundTertiary,
+  sheetTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  sheetTitle: { fontSize: Typography.xl, fontWeight: '900', color: Colors.textPrimary },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetBody: { gap: Spacing.lg },
+  input: {
+    backgroundColor: '#1a1a1a',
     borderWidth: 1,
-    borderColor: Colors.borderPrimary,
-    borderRadius: Radius.xl,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
     padding: Spacing.lg,
     color: Colors.textPrimary,
     fontSize: Typography.base,
   },
-  modalTextArea: { height: 80, textAlignVertical: 'top' },
+  inputArea: { height: 80, textAlignVertical: 'top' },
+
+  // Enter Arena Banner
+  enterArenaBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: Colors.gold,
+    borderRadius: 18,
+    padding: Spacing['2xl'],
+    marginBottom: Spacing.xl,
+    overflow: 'hidden',
+    shadowColor: Colors.gold,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  enterArenaBannerGlow: {
+    position: 'absolute',
+    top: -30,
+    right: -30,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  enterArenaTitle: { fontSize: Typography.lg, fontWeight: '900', color: '#000' },
+  enterArenaSub: { fontSize: 11, color: 'rgba(0,0,0,0.55)', marginTop: 2, fontWeight: '600' },
+
   inviteRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: Colors.white5,
-    borderRadius: Radius.xl,
-    padding: Spacing.md,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 14,
+    padding: Spacing.lg,
     marginBottom: Spacing.xl,
   },
-  inviteCodeBox: { flex: 1 },
-  inviteCodeLabel: { fontSize: 10, color: Colors.textSecondary, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  inviteCode: { fontSize: Typography.lg, fontWeight: '900', color: Colors.gold, letterSpacing: 2 },
-  copyBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.white10,
+  inviteLabel: { fontSize: 10, color: Colors.textSecondary, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
+  inviteCode: { fontSize: Typography.xl, fontWeight: '900', color: Colors.gold, letterSpacing: 3 },
+  iconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  memberTitle: {
-    fontSize: 11,
+
+  sectionLabel: {
+    fontSize: 10,
     fontWeight: '900',
     textTransform: 'uppercase',
     letterSpacing: 3,
     color: Colors.textSecondary,
-    marginBottom: Spacing.md,
-    marginTop: Spacing.xl,
+    marginBottom: 10,
   },
   memberList: { gap: 8, marginBottom: Spacing.xl },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: Colors.white5,
-    borderRadius: Radius.xl,
-    padding: Spacing.md,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 14,
+    padding: 12,
   },
-  memberInfo: { flex: 1 },
+  memberNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   memberName: { fontSize: Typography.sm, fontWeight: '700', color: Colors.textPrimary },
-  memberUsername: { fontSize: 11, color: Colors.textSecondary },
+  memberUsername: { fontSize: 11, color: Colors.textSecondary, marginTop: 1 },
   readyBadge: {
-    backgroundColor: 'rgba(34,197,94,0.1)',
+    backgroundColor: 'rgba(34,197,94,0.12)',
     borderRadius: 8,
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
   },
   readyBadgeText: { fontSize: 10, fontWeight: '800', color: '#22c55e' },
-  addMemberBtn: {
-    width: 36,
-    height: 36,
+  addBtn: {
+    width: 34,
+    height: 34,
     borderRadius: 10,
-    backgroundColor: Colors.goldLight,
+    backgroundColor: 'rgba(212,175,55,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   arenaActions: { marginBottom: Spacing.xl },
-  readyActions: { flexDirection: 'row', gap: 12 },
-  groupActions: { marginTop: Spacing.md },
+
+  dangerZone: { marginTop: Spacing.md, marginBottom: Spacing.xl },
   dangerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -677,7 +881,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.errorLight,
     borderWidth: 1,
     borderColor: Colors.errorBorder,
-    borderRadius: Radius['2xl'],
+    borderRadius: 14,
     padding: Spacing.lg,
   },
   dangerBtnText: { fontSize: Typography.base, fontWeight: '700', color: Colors.error },

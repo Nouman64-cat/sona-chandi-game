@@ -39,10 +39,7 @@ export default function LoginScreen({ navigation }: Props) {
       await login(res.data.access_token, res.data.gender || 'Other');
       await refreshGender();
     } catch (err: any) {
-      Alert.alert(
-        'Login Failed',
-        err.response?.data?.detail || 'Please check your credentials.'
-      );
+      Alert.alert('Login Failed', err.response?.data?.detail || 'Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -50,28 +47,32 @@ export default function LoginScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.flex}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Ambient glows */}
-          <View style={styles.glowTopLeft} />
-          <View style={styles.glowBottomRight} />
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
-          <View style={styles.card}>
-            <View style={styles.header}>
-              <Text style={styles.title}>SONA CHANDI</Text>
-              <Text style={styles.subtitle}>Welcome back, legend. Log in to your account.</Text>
+          {/* Background glows */}
+          <View style={styles.glowTop} />
+          <View style={styles.glowBottom} />
+
+          {/* Logo / Branding */}
+          <View style={styles.brand}>
+            <Text style={styles.brandTitle}>SONA CHANDI</Text>
+            <View style={styles.brandDivider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.brandTagline}>Elite Card Game</Text>
+              <View style={styles.dividerLine} />
             </View>
+          </View>
+
+          {/* Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeading}>Welcome Back</Text>
+            <Text style={styles.cardSub}>Sign in to your account</Text>
 
             <View style={styles.form}>
               <FormInput
                 label="Username"
-                icon="person"
+                icon="person-outline"
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
@@ -81,32 +82,30 @@ export default function LoginScreen({ navigation }: Props) {
 
               <FormInput
                 label="Password"
-                icon="lock-closed"
+                icon="lock-closed-outline"
                 value={password}
                 onChangeText={setPassword}
                 isPassword
                 placeholder="••••••••"
               />
 
-              <TouchableOpacity
-                onPress={() => navigation.navigate('ForgotPassword')}
-                style={styles.forgotRow}
-              >
+              <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgotRow}>
                 <Text style={styles.forgotText}>Forgot password?</Text>
               </TouchableOpacity>
 
               <GoldButton onPress={handleLogin} loading={loading}>
-                Log In
+                Sign In
               </GoldButton>
             </View>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
+              <Text style={styles.footerText}>New to the arena? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.footerLink}>Register Now</Text>
+                <Text style={styles.footerLink}>Create Account</Text>
               </TouchableOpacity>
             </View>
           </View>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -120,67 +119,88 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing['2xl'],
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: 40,
   },
-  glowTopLeft: {
+
+  glowTop: {
     position: 'absolute',
-    top: -100,
-    left: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(212,175,55,0.04)',
+    top: -80,
+    left: -60,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: 'rgba(212,175,55,0.05)',
   },
-  glowBottomRight: {
+  glowBottom: {
     position: 'absolute',
-    bottom: -100,
-    right: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
+    bottom: -80,
+    right: -60,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
     backgroundColor: 'rgba(192,192,192,0.04)',
   },
-  card: {
-    width: '100%',
-    maxWidth: 440,
-    backgroundColor: Colors.glass,
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-    borderRadius: Radius['3xl'],
-    padding: Spacing['3xl'],
-  },
-  header: { alignItems: 'center', marginBottom: Spacing['4xl'] },
-  title: {
-    fontSize: Typography['3xl'],
+
+  brand: { alignItems: 'center', marginBottom: 36 },
+  brandTitle: {
+    fontSize: 36,
     fontWeight: '900',
     fontStyle: 'italic',
     color: Colors.gold,
     letterSpacing: -1,
-    marginBottom: 8,
   },
-  subtitle: {
+  brandDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 10,
+  },
+  dividerLine: {
+    width: 32,
+    height: 1,
+    backgroundColor: 'rgba(212,175,55,0.3)',
+  },
+  brandTagline: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 3,
+  },
+
+  card: {
+    width: '100%',
+    maxWidth: 440,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.09)',
+    borderRadius: 28,
+    padding: Spacing['3xl'],
+  },
+  cardHeading: {
+    fontSize: Typography['2xl'],
+    fontWeight: '900',
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  cardSub: {
     fontSize: Typography.sm,
     color: Colors.textSecondary,
     textAlign: 'center',
+    marginBottom: Spacing['3xl'],
   },
+
   form: { gap: Spacing.xl },
-  forgotRow: { alignItems: 'flex-end' },
-  forgotText: {
-    fontSize: Typography.sm,
-    color: Colors.textSecondary,
-  },
+  forgotRow: { alignItems: 'flex-end', marginTop: -4 },
+  forgotText: { fontSize: Typography.sm, color: Colors.textSecondary },
+
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: Spacing['3xl'],
   },
-  footerText: {
-    fontSize: Typography.sm,
-    color: Colors.textSecondary,
-  },
-  footerLink: {
-    fontSize: Typography.sm,
-    fontWeight: '800',
-    color: Colors.gold,
-  },
+  footerText: { fontSize: Typography.sm, color: Colors.textSecondary },
+  footerLink: { fontSize: Typography.sm, fontWeight: '800', color: Colors.gold },
 });

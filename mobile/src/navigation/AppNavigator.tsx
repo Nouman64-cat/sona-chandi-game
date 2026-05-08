@@ -1,9 +1,9 @@
 import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '../context/AuthContext';
 import { Colors } from '../theme';
@@ -29,6 +29,17 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 
+type TabIconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const TAB_ICONS: Record<string, { active: TabIconName; inactive: TabIconName; label: string }> = {
+  Dashboard: { active: 'home', inactive: 'home-outline', label: 'Home' },
+  Search:    { active: 'search', inactive: 'search-outline', label: 'Search' },
+  Groups:    { active: 'shield', inactive: 'shield-outline', label: 'Squads' },
+  Friends:   { active: 'people', inactive: 'people-outline', label: 'Allies' },
+  History:   { active: 'book', inactive: 'book-outline', label: 'History' },
+  Profile:   { active: 'person', inactive: 'person-outline', label: 'Profile' },
+};
+
 function AuthNavigator() {
   return (
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
@@ -43,36 +54,48 @@ function AuthNavigator() {
 function MainTabNavigator() {
   return (
     <MainTab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: Colors.navBackground,
-          borderTopColor: Colors.borderPrimary,
-          borderTopWidth: 1,
-          height: 72,
-          paddingBottom: 12,
-          paddingTop: 8,
-        },
-        tabBarActiveTintColor: Colors.gold,
-        tabBarInactiveTintColor: Colors.textSecondary,
-        tabBarShowLabel: false,
-        tabBarIcon: ({ color, size }) => {
-          const iconSize = 24;
-          if (route.name === 'Dashboard')
-            return <Ionicons name="home" size={iconSize} color={color} />;
-          if (route.name === 'Search')
-            return <Ionicons name="search" size={iconSize} color={color} />;
-          if (route.name === 'Groups')
-            return <Ionicons name="shield" size={iconSize} color={color} />;
-          if (route.name === 'Friends')
-            return <Ionicons name="people" size={iconSize} color={color} />;
-          if (route.name === 'History')
-            return <Ionicons name="book" size={iconSize} color={color} />;
-          if (route.name === 'Profile')
-            return <Ionicons name="person" size={iconSize} color={color} />;
-          return <Ionicons name="home" size={iconSize} color={color} />;
-        },
-      })}
+      screenOptions={({ route }) => {
+        const cfg = TAB_ICONS[route.name];
+        return {
+          headerShown: false,
+          tabBarStyle: {
+            backgroundColor: '#080808',
+            borderTopColor: 'rgba(255,255,255,0.07)',
+            borderTopWidth: 1,
+            height: 80,
+            paddingBottom: 16,
+            paddingTop: 10,
+          },
+          tabBarActiveTintColor: Colors.gold,
+          tabBarInactiveTintColor: 'rgba(161,161,170,0.5)',
+          tabBarLabelStyle: {
+            fontSize: 10,
+            fontWeight: '700',
+            letterSpacing: 0.3,
+            marginTop: 2,
+          },
+          tabBarLabel: cfg?.label ?? route.name,
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              <Ionicons
+                name={focused ? cfg?.active : cfg?.inactive}
+                size={22}
+                color={color}
+              />
+              {focused && (
+                <View style={{
+                  position: 'absolute',
+                  bottom: -6,
+                  width: 4,
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: Colors.gold,
+                }} />
+              )}
+            </View>
+          ),
+        };
+      }}
     >
       <MainTab.Screen name="Dashboard" component={DashboardScreen} />
       <MainTab.Screen name="Search" component={SearchScreen} />
@@ -90,6 +113,9 @@ export default function AppNavigator() {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: Colors.background, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: Colors.gold, fontSize: 28, fontWeight: '900', fontStyle: 'italic', letterSpacing: -1, marginBottom: 24 }}>
+          SONA CHANDI
+        </Text>
         <ActivityIndicator size="large" color={Colors.gold} />
       </View>
     );

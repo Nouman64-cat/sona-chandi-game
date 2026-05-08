@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -16,13 +16,12 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Colors, Spacing, Typography, Radius } from '../theme';
-import GlassCard from '../components/GlassCard';
 import AvatarImage from '../components/AvatarImage';
 import LoadingScreen from '../components/LoadingScreen';
 
 export default function ProfileScreen() {
   const { user, refreshUser, logout } = useAuth();
-  const { theme, toggleTheme, accentColor } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const [uploading, setUploading] = useState(false);
   const [togglingPrivacy, setTogglingPrivacy] = useState(false);
   const [error, setError] = useState('');
@@ -79,7 +78,7 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to exit the Arena?', [
+    Alert.alert('Log Out', 'Are you sure you want to exit?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Log Out', style: 'destructive', onPress: logout },
     ]);
@@ -97,134 +96,124 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <GlassCard>
-          {/* Avatar + Header */}
-          <View style={styles.avatarSection}>
-            <TouchableOpacity
-              onPress={handlePickImage}
-              disabled={uploading}
-              style={styles.avatarWrapper}
-            >
-              <AvatarImage
-                uri={user.profile_picture_url}
-                name={user.full_name}
-                size={140}
-                borderRadius={70}
-                style={styles.avatar}
-              />
-              <View style={styles.avatarOverlay}>
-                {uploading ? (
-                  <ActivityIndicator size="large" color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="camera" size={28} color="#fff" />
-                    <Text style={styles.avatarOverlayText}>Change Photo</Text>
-                  </>
-                )}
-              </View>
-            </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
+        {/* Avatar hero */}
+        <View style={styles.heroSection}>
+          <View style={styles.heroBg} />
+          <TouchableOpacity
+            onPress={handlePickImage}
+            disabled={uploading}
+            style={styles.avatarTouchable}
+            activeOpacity={0.85}
+          >
+            <AvatarImage
+              uri={user.profile_picture_url}
+              name={user.full_name}
+              size={110}
+              borderRadius={55}
+              style={styles.avatarImg}
+            />
+            <View style={styles.avatarEditBadge}>
+              {uploading
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Ionicons name="camera" size={14} color="#fff" />
+              }
+            </View>
+          </TouchableOpacity>
+
+          <Text style={styles.displayName}>{user.full_name}</Text>
+          <Text style={styles.displayUsername}>@{user.username}</Text>
+
+          <View style={styles.badgeRow}>
             {user.is_admin && (
-              <View style={styles.adminBadge}>
-                <Ionicons name="shield-checkmark" size={12} color={Colors.gold} />
-                <Text style={styles.adminBadgeText}>Commander</Text>
+              <View style={[styles.badge, styles.badgeAdmin]}>
+                <Ionicons name="shield-checkmark" size={11} color={Colors.gold} />
+                <Text style={[styles.badgeText, { color: Colors.gold }]}>Commander</Text>
               </View>
             )}
-          </View>
-
-          <View style={styles.nameBlock}>
-            <Text style={styles.displayName}>{user.full_name}</Text>
-            <Text style={styles.displayUsername}>@{user.username}</Text>
-          </View>
-
-          {error ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{error}</Text>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{user.gender}</Text>
             </View>
-          ) : null}
-        </GlassCard>
-
-        {/* Info Fields */}
-        <GlassCard>
-          <Text style={styles.sectionTitle}>Legend Profile</Text>
-          <View style={styles.fieldList}>
-            {infoFields.map((f) => (
-              <View key={f.label} style={styles.fieldRow}>
-                <View style={styles.fieldIconBox}>
-                  <Ionicons name={f.icon} size={18} color={Colors.textSecondary} />
-                </View>
-                <View style={styles.fieldContent}>
-                  <Text style={styles.fieldLabel}>{f.label}</Text>
-                  <Text style={styles.fieldValue}>{f.value}</Text>
-                </View>
-              </View>
-            ))}
           </View>
-        </GlassCard>
+        </View>
 
-        {/* Settings */}
-        <GlassCard>
-          <Text style={styles.sectionTitle}>Settings</Text>
-          <View style={styles.settingsList}>
-            {/* Privacy toggle */}
-            <View style={styles.settingRow}>
-              <View style={styles.settingLeft}>
-                <View style={styles.settingIconBox}>
-                  <Ionicons name="lock-closed" size={18} color={Colors.textSecondary} />
-                </View>
-                <View>
-                  <Text style={styles.settingLabel}>Private Account</Text>
-                  <Text style={styles.settingDesc}>Hide your profile from public search</Text>
-                </View>
+        {error ? (
+          <View style={styles.errorBox}>
+            <Ionicons name="alert-circle" size={16} color={Colors.error} />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
+
+        {/* Info card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Profile Details</Text>
+          {infoFields.map((f) => (
+            <View key={f.label} style={styles.fieldRow}>
+              <View style={styles.fieldIconBox}>
+                <Ionicons name={f.icon} size={16} color={Colors.textSecondary} />
               </View>
-              {togglingPrivacy ? (
-                <ActivityIndicator size="small" color={Colors.gold} />
-              ) : (
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fieldLabel}>{f.label}</Text>
+                <Text style={styles.fieldValue}>{f.value}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* Settings card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Settings</Text>
+
+          <View style={styles.settingRow}>
+            <View style={styles.settingLeft}>
+              <View style={styles.settingIconBox}>
+                <Ionicons name="lock-closed" size={16} color={Colors.textSecondary} />
+              </View>
+              <View>
+                <Text style={styles.settingLabel}>Private Account</Text>
+                <Text style={styles.settingDesc}>Hide from public search</Text>
+              </View>
+            </View>
+            {togglingPrivacy
+              ? <ActivityIndicator size="small" color={Colors.gold} />
+              : (
                 <Switch
                   value={!!user.is_private}
                   onValueChange={handlePrivacyToggle}
-                  trackColor={{ false: Colors.borderPrimary, true: Colors.gold }}
+                  trackColor={{ false: 'rgba(255,255,255,0.1)', true: Colors.gold }}
                   thumbColor="#fff"
+                  ios_backgroundColor="rgba(255,255,255,0.1)"
                 />
               )}
-            </View>
-
-            {/* Theme toggle */}
-            <View style={styles.settingRow}>
-              <View style={styles.settingLeft}>
-                <View style={styles.settingIconBox}>
-                  <Ionicons
-                    name={theme === 'dark' ? 'sunny' : 'moon'}
-                    size={18}
-                    color={Colors.textSecondary}
-                  />
-                </View>
-                <View>
-                  <Text style={styles.settingLabel}>
-                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                  </Text>
-                  <Text style={styles.settingDesc}>Toggle display theme</Text>
-                </View>
-              </View>
-              <Switch
-                value={theme === 'dark'}
-                onValueChange={toggleTheme}
-                trackColor={{ false: Colors.borderPrimary, true: Colors.gold }}
-                thumbColor="#fff"
-              />
-            </View>
           </View>
-        </GlassCard>
+
+          <View style={[styles.settingRow, { borderBottomWidth: 0 }]}>
+            <View style={styles.settingLeft}>
+              <View style={styles.settingIconBox}>
+                <Ionicons name={theme === 'dark' ? 'moon' : 'sunny'} size={16} color={Colors.textSecondary} />
+              </View>
+              <View>
+                <Text style={styles.settingLabel}>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</Text>
+                <Text style={styles.settingDesc}>Toggle display theme</Text>
+              </View>
+            </View>
+            <Switch
+              value={theme === 'dark'}
+              onValueChange={toggleTheme}
+              trackColor={{ false: 'rgba(255,255,255,0.1)', true: Colors.gold }}
+              thumbColor="#fff"
+              ios_backgroundColor="rgba(255,255,255,0.1)"
+            />
+          </View>
+        </View>
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-          <Ionicons name="log-out" size={20} color={Colors.error} />
+          <Ionicons name="log-out-outline" size={20} color={Colors.error} />
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -232,97 +221,148 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: Spacing['5xl'] },
-  avatarSection: { alignItems: 'center', marginBottom: Spacing.xl },
-  avatarWrapper: { position: 'relative' },
-  avatar: { borderWidth: 3, borderColor: 'rgba(212,175,55,0.3)' },
-  avatarOverlay: {
+  scroll: { paddingBottom: 48 },
+
+  heroSection: {
+    alignItems: 'center',
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing['3xl'],
+    paddingHorizontal: Spacing['2xl'],
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  heroBg: {
     position: 'absolute',
-    inset: 0,
-    borderRadius: 70,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    top: -80,
+    left: '50%',
+    marginLeft: -100,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(212,175,55,0.06)',
+  },
+  avatarTouchable: {
+    position: 'relative',
+    marginBottom: 14,
+  },
+  avatarImg: {
+    borderWidth: 3,
+    borderColor: 'rgba(212,175,55,0.4)',
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: Colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    borderWidth: 2,
+    borderColor: Colors.background,
   },
-  avatarOverlayText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#fff',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+  displayName: {
+    fontSize: Typography.xl,
+    fontWeight: '900',
+    color: Colors.textPrimary,
+    marginBottom: 4,
   },
-  adminBadge: {
+  displayUsername: {
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
+    marginBottom: 12,
+  },
+  badgeRow: { flexDirection: 'row', gap: 8 },
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.goldLight,
-    borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.3)',
-    borderRadius: 99,
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 4,
-    marginTop: 12,
   },
-  adminBadgeText: { fontSize: 11, fontWeight: '800', color: Colors.gold },
-  nameBlock: { alignItems: 'center', marginBottom: Spacing.md },
-  displayName: { fontSize: Typography.xl, fontWeight: '900', color: Colors.textPrimary },
-  displayUsername: { fontSize: Typography.sm, color: Colors.textSecondary, marginTop: 4 },
+  badgeAdmin: {
+    backgroundColor: 'rgba(212,175,55,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.25)',
+  },
+  badgeText: { fontSize: 11, fontWeight: '700', color: Colors.textSecondary },
+
   errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     backgroundColor: Colors.errorLight,
     borderWidth: 1,
     borderColor: Colors.errorBorder,
-    borderRadius: Radius.xl,
+    borderRadius: 12,
     padding: Spacing.md,
-    marginTop: Spacing.md,
+    marginHorizontal: Spacing['2xl'],
+    marginBottom: Spacing.lg,
   },
-  errorText: { color: Colors.error, fontSize: Typography.sm },
-  sectionTitle: {
-    fontSize: Typography.lg,
+  errorText: { flex: 1, color: Colors.error, fontSize: Typography.sm },
+
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 20,
+    marginHorizontal: Spacing['2xl'],
+    marginBottom: 14,
+    overflow: 'hidden',
+  },
+  cardTitle: {
+    fontSize: 10,
     fontWeight: '900',
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xl,
+    textTransform: 'uppercase',
+    letterSpacing: 3,
+    color: Colors.textSecondary,
+    padding: Spacing.xl,
+    paddingBottom: 10,
   },
-  fieldList: { gap: Spacing.md },
   fieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    backgroundColor: Colors.white5,
-    borderRadius: Radius.xl,
-    padding: Spacing.lg,
+    gap: 12,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
   },
   fieldIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: Colors.white10,
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fieldContent: { flex: 1 },
-  fieldLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  fieldValue: { fontSize: Typography.base, color: Colors.textPrimary, fontWeight: '600', marginTop: 2 },
-  settingsList: { gap: Spacing.md },
+  fieldLabel: { fontSize: 10, color: Colors.textSecondary, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  fieldValue: { fontSize: Typography.sm, color: Colors.textPrimary, fontWeight: '600', marginTop: 1 },
+
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.white5,
-    borderRadius: Radius.xl,
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.05)',
   },
-  settingLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, flex: 1 },
+  settingLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   settingIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: Colors.white10,
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  settingLabel: { fontSize: Typography.base, color: Colors.textPrimary, fontWeight: '700' },
-  settingDesc: { fontSize: 11, color: Colors.textSecondary, marginTop: 2 },
+  settingLabel: { fontSize: Typography.sm, color: Colors.textPrimary, fontWeight: '700' },
+  settingDesc: { fontSize: 11, color: Colors.textSecondary, marginTop: 1 },
+
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -331,8 +371,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.errorLight,
     borderWidth: 1,
     borderColor: Colors.errorBorder,
-    borderRadius: Radius['2xl'],
+    borderRadius: 16,
     padding: Spacing.lg,
+    marginHorizontal: Spacing['2xl'],
   },
   logoutText: { fontSize: Typography.base, fontWeight: '800', color: Colors.error },
 });

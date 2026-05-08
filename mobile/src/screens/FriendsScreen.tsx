@@ -73,7 +73,7 @@ export default function FriendsScreen() {
   };
 
   const removeFriend = async (friendId: number) => {
-    Alert.alert('Remove Friend', 'Are you sure you want to remove this ally?', [
+    Alert.alert('Remove Ally', 'Remove this player from your alliance?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove',
@@ -95,39 +95,33 @@ export default function FriendsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>
             The <Text style={{ color: Colors.silver }}>Alliance</Text>
           </Text>
-          <Text style={styles.subtitle}>
-            Security clearance managed. Consensual connections only.
-          </Text>
+          <Text style={styles.subtitle}>Your trusted network of players.</Text>
         </View>
 
         {/* Incoming Requests */}
         {requests.length > 0 && (
           <View style={styles.section}>
-            <View style={styles.sectionLabelRow}>
+            <View style={styles.sectionHeaderRow}>
               <View style={styles.pulseDot} />
-              <Text style={styles.sectionLabel}>Incoming Transmissions</Text>
+              <Text style={styles.sectionLabel}>
+                Incoming Requests{' '}
+                <Text style={styles.sectionCount}>{requests.length}</Text>
+              </Text>
             </View>
             <View style={styles.list}>
               {requests.map((req) => (
                 <View key={req.id} style={[styles.card, styles.requestCard]}>
-                  <AvatarImage
-                    uri={req.profile_picture_url}
-                    name={req.username}
-                    size={48}
-                    borderRadius={12}
-                    style={{ backgroundColor: Colors.gold }}
-                  />
+                  <AvatarImage uri={req.profile_picture_url} name={req.username} size={50} borderRadius={14} />
                   <View style={styles.cardInfo}>
                     <Text style={styles.cardName}>{req.full_name}</Text>
-                    <Text style={styles.cardSub}>Requesting clearance...</Text>
+                    <Text style={styles.cardSub}>Wants to join your alliance</Text>
                   </View>
                   <View style={styles.requestActions}>
                     <TouchableOpacity
@@ -135,11 +129,10 @@ export default function FriendsScreen() {
                       disabled={actingId === req.id}
                       style={styles.acceptBtn}
                     >
-                      {actingId === req.id ? (
-                        <ActivityIndicator size="small" color="#000" />
-                      ) : (
-                        <Text style={styles.acceptBtnText}>Accept</Text>
-                      )}
+                      {actingId === req.id
+                        ? <ActivityIndicator size="small" color="#000" />
+                        : <Text style={styles.acceptBtnText}>Accept</Text>
+                      }
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => declineRequest(req.id)}
@@ -155,28 +148,28 @@ export default function FriendsScreen() {
           </View>
         )}
 
-        {/* Active Alliance */}
+        {/* Friends list */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Active Alliance</Text>
-          <View style={styles.list}>
-            {friends.length === 0 ? (
-              <View style={styles.empty}>
-                <View style={styles.emptyIcon}>
-                  <Ionicons name="shield" size={40} color={Colors.textSecondary} style={{ opacity: 0.2 }} />
-                </View>
-                <Text style={styles.emptyText}>
-                  The Alliance is currently empty. Start transmissions via search.
-                </Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionLabel}>
+              Alliance{' '}
+              {friends.length > 0 && <Text style={styles.sectionCount}>{friends.length}</Text>}
+            </Text>
+          </View>
+
+          {friends.length === 0 ? (
+            <View style={styles.empty}>
+              <View style={styles.emptyIcon}>
+                <Ionicons name="people-outline" size={36} color={Colors.textSecondary} style={{ opacity: 0.3 }} />
               </View>
-            ) : (
-              friends.map((friend) => (
+              <Text style={styles.emptyTitle}>No allies yet</Text>
+              <Text style={styles.emptyText}>Find players via Search to build your alliance.</Text>
+            </View>
+          ) : (
+            <View style={styles.list}>
+              {friends.map((friend) => (
                 <View key={friend.id} style={styles.card}>
-                  <AvatarImage
-                    uri={friend.profile_picture_url}
-                    name={friend.username}
-                    size={48}
-                    borderRadius={12}
-                  />
+                  <AvatarImage uri={friend.profile_picture_url} name={friend.username} size={50} borderRadius={14} />
                   <View style={styles.cardInfo}>
                     <Text style={styles.cardName}>{friend.full_name}</Text>
                     <Text style={styles.cardSub}>@{friend.username}</Text>
@@ -186,17 +179,17 @@ export default function FriendsScreen() {
                     disabled={removingId === friend.id}
                     style={styles.removeBtn}
                   >
-                    {removingId === friend.id ? (
-                      <ActivityIndicator size="small" color={Colors.error} />
-                    ) : (
-                      <Ionicons name="person-remove" size={18} color={Colors.error} />
-                    )}
+                    {removingId === friend.id
+                      ? <ActivityIndicator size="small" color={Colors.error} />
+                      : <Ionicons name="person-remove-outline" size={18} color={Colors.error} />
+                    }
                   </TouchableOpacity>
                 </View>
-              ))
-            )}
-          </View>
+              ))}
+            </View>
+          )}
         </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -204,18 +197,15 @@ export default function FriendsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: { padding: Spacing['2xl'], gap: Spacing['3xl'], paddingBottom: Spacing['5xl'] },
+  scroll: { padding: Spacing['2xl'], gap: Spacing['3xl'], paddingBottom: 48 },
+
   header: {},
   title: { fontSize: Typography['3xl'], fontWeight: '900', color: Colors.textPrimary },
   subtitle: { fontSize: Typography.sm, color: Colors.textSecondary, marginTop: 6 },
-  section: { gap: Spacing.md },
-  sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  pulseDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.gold,
-  },
+
+  section: { gap: 12 },
+  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  pulseDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.gold },
   sectionLabel: {
     fontSize: 10,
     fontWeight: '900',
@@ -223,62 +213,72 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
     color: Colors.textSecondary,
   },
-  list: { gap: Spacing.md },
+  sectionCount: { color: Colors.gold },
+
+  list: { gap: 10 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    backgroundColor: Colors.glass,
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
-    borderColor: Colors.glassBorder,
-    borderRadius: Radius['2xl'],
-    padding: Spacing.xl,
+    borderColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 18,
+    padding: Spacing.lg,
   },
   requestCard: {
     borderColor: 'rgba(212,175,55,0.2)',
+    backgroundColor: 'rgba(212,175,55,0.03)',
   },
   cardInfo: { flex: 1 },
   cardName: { fontSize: Typography.base, fontWeight: '700', color: Colors.textPrimary },
   cardSub: { fontSize: Typography.sm, color: Colors.textSecondary, marginTop: 2 },
+
   requestActions: { flexDirection: 'row', gap: 8 },
   acceptBtn: {
-    paddingHorizontal: Spacing.lg,
-    height: 40,
-    borderRadius: Radius.xl,
+    paddingHorizontal: 16,
+    height: 38,
+    borderRadius: 12,
     backgroundColor: Colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: Colors.gold,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
   },
   acceptBtnText: { fontSize: Typography.sm, fontWeight: '800', color: '#000' },
   declineBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.xl,
-    backgroundColor: Colors.white5,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   removeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.xl,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     backgroundColor: Colors.errorLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  empty: { alignItems: 'center', paddingVertical: Spacing['5xl'], gap: 16 },
+
+  empty: { alignItems: 'center', paddingVertical: 48, gap: 12 },
   emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.white5,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(255,255,255,0.04)',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  emptyTitle: { fontSize: Typography.lg, fontWeight: '800', color: Colors.textPrimary },
   emptyText: {
-    fontSize: Typography.base,
+    fontSize: Typography.sm,
     color: Colors.textSecondary,
     textAlign: 'center',
-    fontStyle: 'italic',
   },
 });
