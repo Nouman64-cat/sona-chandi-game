@@ -10,7 +10,10 @@ import {
   Alert,
   ActivityIndicator,
   Clipboard,
+  Dimensions,
 } from 'react-native';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -464,10 +467,11 @@ export default function GroupsScreen() {
         onRequestClose={() => setSelectedGroup(null)}
       >
         <View style={styles.overlay}>
-          <View style={[styles.sheet, styles.sheetTall]}>
+          {/* Fixed height sheet — gives ScrollView a known constraint */}
+          <View style={styles.sheetDetail}>
             <View style={styles.sheetHandle} />
 
-            {/* Header */}
+            {/* Header — fixed, not inside ScrollView */}
             <View style={styles.sheetHeader}>
               <View style={styles.sheetTitleRow}>
                 <Text style={styles.sheetTitle}>{selectedGroup?.name}</Text>
@@ -483,7 +487,10 @@ export default function GroupsScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.sheetScrollContent}
+            >
 
               {/* Enter Arena CTA — most prominent when live */}
               {activeGameId ? (
@@ -602,7 +609,7 @@ export default function GroupsScreen() {
               </View>
 
             </ScrollView>
-          </View>
+          </View>{/* end sheetDetail */}
         </View>
       </Modal>
     </SafeAreaView>
@@ -739,6 +746,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.85)',
     justifyContent: 'flex-end',
   },
+  // Small modals (create / join) — auto height, no scroll needed
   sheet: {
     backgroundColor: '#0e0e0e',
     borderTopLeftRadius: 28,
@@ -749,7 +757,20 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 48,
   },
-  sheetTall: { maxHeight: '92%' },
+  // Group detail modal — fixed height so ScrollView can measure itself
+  sheetDetail: {
+    backgroundColor: '#0e0e0e',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    paddingTop: 12,
+    height: SCREEN_HEIGHT * 0.88,
+  },
+  sheetScrollContent: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingBottom: 48,
+  },
   sheetHandle: {
     width: 40,
     height: 4,
@@ -763,6 +784,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing['2xl'],
+    paddingHorizontal: Spacing['2xl'],
   },
   sheetTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   sheetTitle: { fontSize: Typography.xl, fontWeight: '900', color: Colors.textPrimary },
