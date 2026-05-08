@@ -1,0 +1,62 @@
+export const Colors = {
+  background: '#050505',
+  backgroundSecondary: '#0f0f0f',
+  backgroundTertiary: '#1a1a1a',
+  textPrimary: '#ffffff',
+  textSecondary: '#a1a1aa',
+  gold: '#D4AF37',
+  goldDim: 'rgba(212, 175, 55, 0.6)',
+  goldLight: 'rgba(212, 175, 55, 0.1)',
+  silver: '#C0C0C0',
+  borderPrimary: 'rgba(255, 255, 255, 0.1)',
+  borderSecondary: 'rgba(255, 255, 255, 0.05)',
+  navBackground: 'rgba(5, 5, 5, 0.97)',
+  error: '#ef4444',
+  errorLight: 'rgba(239, 68, 68, 0.1)',
+  errorBorder: 'rgba(239, 68, 68, 0.2)',
+  success: '#22c55e',
+  successLight: 'rgba(34, 197, 94, 0.1)',
+  glass: 'rgba(255, 255, 255, 0.04)',
+  glassBorder: 'rgba(255, 255, 255, 0.08)',
+  male: '#3b82f6',
+  female: '#ec4899',
+  white5: 'rgba(255, 255, 255, 0.05)',
+  white10: 'rgba(255, 255, 255, 0.1)',
+  black30: 'rgba(0, 0, 0, 0.3)',
+  black50: 'rgba(0, 0, 0, 0.5)',
+  black80: 'rgba(0, 0, 0, 0.8)',
+  black90: 'rgba(0, 0, 0, 0.9)',
+};
+
+export const Typography = {
+  xs: 11,
+  sm: 13,
+  base: 15,
+  lg: 17,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 30,
+  '4xl': 36,
+};
+
+export const Spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 32,
+  '4xl': 40,
+  '5xl': 48,
+};
+
+export const Radius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 28,
+  full: 9999,
+};

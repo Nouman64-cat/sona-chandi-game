@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Sona Chandi",
+    "slug": "sona-chandi-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sonachandi.mobile"
+    },
+    "android": {
+      "package": "com.sonachandi.mobile"
+    },
+    "plugins": [
+      "expo-image-picker",
+      "expo-font"
+    ]
+  }
+}
