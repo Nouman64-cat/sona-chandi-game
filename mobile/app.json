@@ -13,11 +13,19 @@
       "bundleIdentifier": "com.sonachandi.mobile"
     },
     "android": {
-      "package": "com.sonachandi.mobile"
+      "package": "com.sonachandi.mobile",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-image-picker",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1d1e715d-9851-4aa7-904b-5eb36e768df4"
+      }
+    }
   }
 }
